@@ -2,6 +2,8 @@
 import os
 import sys
 import cv2
+from absl import flags
+from absl import app
 import numpy as np
 from tqdm import tqdm
 import torch
@@ -16,8 +18,11 @@ import syft as sy
 from syft.federated.floptimizer import Optims
 
 # %%
-REBUILD_DATA = False  # set to true to one once, then back to false unless you want to change something in your training data.
-
+flags.DEFINE_integer('Batch_size', 64, 'The size of the batch from a round of training')
+flags.DEFINE_integer('Epochs', 5, 'The number of rounds of training')
+flags.DEFINE_float('Learn_rate', 0.001, 'The rate of learning by the optimizer')
+flags.DEFINE_integer('Input_dim', 10, 'the input dimension, used from getting the train data')
+FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v")
 # x_hook = sy.VirtualWorker(hook=hook, id="x")
@@ -30,13 +35,8 @@ def get_train_data(top_n_features=10):
     print("Loading combined training data...")
     df = pd.concat((pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)), ignore_index=True)
     fisher = pd.read_csv('../fisher.csv')
-    # y_train = []
-    # with open("../data/labels.txt", 'r') as labels:
-    #    for lines in labels:
-    #        y_train.append(lines.rstrip())
     features = fisher.iloc[0:int(top_n_features)]['Feature'].values
     df = df[list(features)]
-    # return df, y_train
     return df, top_n_features
 
 
@@ -51,20 +51,20 @@ def create_scalar(x_opt, x_test, x_train):
 
 
 # %%
-def train(net, x_train, x_opt, BATCH_SIZE, EPOCHS, input_dim):
+def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     outputs = 0
-    optimizer = optim.SGD(net.parameters(), lr=0.001)
+    optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
     loss = 0
     batch_y = 0
-    optims = Optims(workers, optim=optim.SGD(params=net.parameters(), lr=0.001))
-    for epoch in range(EPOCHS):
-        for i in tqdm(range(0, len(x_train), BATCH_SIZE)):
+    optims = Optims(workers, optim=optimizer)
+    for epoch in range(epochs):
+        for i in tqdm(range(0, len(x_opt), batch_size)):
             # batch_x = x_train[i:i + BATCH_SIZE]
             # batch_x = x_train.view(i, BATCH_SIZE)
             # print("bx", batch_x.size())
 
-            batch_y = x_opt[i:i + BATCH_SIZE]
+            batch_y = x_opt[i:i + batch_size]
             batch_y = batch_y.send('v')
             net.send(batch_y.location)
             opt = optims.get_optim(batch_y.location.id)
@@ -87,7 +87,7 @@ def train(net, x_train, x_opt, BATCH_SIZE, EPOCHS, input_dim):
 
 
 # %%
-def cal_threshold(mse):
+def cal_threshold(mse, input_dim):
     # mse = np.mean(np.power(loss_val.real, 2), axis=1)
     print("mean is %.5f" % mse.mean())
     print("min is %.5f" % mse.min())
@@ -152,32 +152,35 @@ class Net(nn.Module):
 
 
 # %%
-net = Net(*sys.argv[1:])
 
-# %%
-training_data, input_dim = get_train_data(*sys.argv[1:])
-x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
-                                  [int(1 / 3 * len(training_data)),
-                                   int(2 / 3 * len(training_data))])
+def main(argv):
+    input_dim = FLAGS.Input_dim
+    net = Net(input_dim)
+    # %%
+    training_data, input_dim = get_train_data(input_dim)
+    x_train, x_opt, x_test = np.split(
+        training_data.sample(frac=1, random_state=1),
+        [int(1 / 3 * len(training_data)),
+         int(2 / 3 * len(training_data))])
+    # %%
+    x_train, x_opt, x_test = create_scalar(x_opt, x_test, x_train)
+    # %%
+    batch_size = FLAGS.Batch_size
+    epochs = FLAGS.Epochs
+    learn_rate = FLAGS.Learn_rate
+    # %%
+    mse = train(net=net,
+                x_train=torch.from_numpy(x_train).float(),
+                x_opt=torch.from_numpy(x_opt).float(),
+                batch_size=batch_size,
+                epochs=epochs,
+                learn_rate=learn_rate)
+    tr = cal_threshold(mse=mse, input_dim=input_dim)
+    print(tr)
+    # %%
+    test(net,
+         torch.from_numpy(x_test).float(), tr=1)
 
-# %%
-x_train, x_opt, x_test = create_scalar(x_opt, x_test, x_train)
 
-# %%
-BATCH_SIZE = 1000
-EPOCHS = 1
-
-# %%
-mse = train(net,
-            torch.from_numpy(x_train).float(),
-            torch.from_numpy(x_opt).float(),
-            BATCH_SIZE,
-            EPOCHS,
-            input_dim=input_dim)
-
-tr = cal_threshold(mse=mse)
-print(tr)
-
-# %%
-test(net,
-     torch.from_numpy(x_test).float(), tr=1)
+if __name__ == '__main__':
+    app.run(main)

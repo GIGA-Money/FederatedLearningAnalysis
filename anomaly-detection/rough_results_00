@@ -1,0 +1,43 @@
+PySyft implementation.
+
+With a lear rate of 0.001. epochs: 5, and a batch set of 64.
+Loading combined training data...
+100%|██████████| 1443/1443 [02:08<00:00, 11.23it/s]
+Epoch: 0. Loss: 0.450491726398468
+100%|██████████| 1443/1443 [02:08<00:00, 11.20it/s]
+Epoch: 1. Loss: 0.450483500957489
+100%|██████████| 1443/1443 [02:08<00:00, 11.23it/s]
+Epoch: 2. Loss: 0.4504755735397339
+100%|██████████| 1443/1443 [02:08<00:00, 11.23it/s]
+Epoch: 3. Loss: 0.45046794414520264
+100%|██████████| 1443/1443 [02:07<00:00, 11.29it/s]
+Epoch: 4. Loss: 0.45046064257621765
+mean is 0.45046
+min is 0.07795
+max is 3.59269
+std is 0.80728
+Calculated threshold is 1.2577431201934814
+1.2577431
+Calculating MSE on test set...
+6198 false positives on dataset without attacks with size 92334
+
+With a lear rate of 0.01. epochs: 5, and a batch set of 64.
+Loading combined training data...
+100%|██████████| 1443/1443 [02:08<00:00, 11.21it/s]
+Epoch: 0. Loss: 0.45181208848953247
+100%|██████████| 1443/1443 [02:08<00:00, 11.20it/s]
+Epoch: 1. Loss: 0.45163649320602417
+100%|██████████| 1443/1443 [02:08<00:00, 11.20it/s]
+Epoch: 2. Loss: 0.45148858428001404
+100%|██████████| 1443/1443 [02:08<00:00, 11.22it/s]
+Epoch: 3. Loss: 0.45136117935180664
+100%|██████████| 1443/1443 [02:09<00:00, 11.18it/s]
+Epoch: 4. Loss: 0.45124882459640503
+mean is 0.45125
+min is 0.07955
+max is 3.60948
+std is 0.80666
+Calculated threshold is 1.2579058408737183
+1.2579058
+Calculating MSE on test set...
+6205 false positives on dataset without attacks with size 92334
