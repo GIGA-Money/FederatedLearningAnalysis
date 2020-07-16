@@ -1,23 +1,20 @@
 # %%
 import os
-import sys
-import cv2
-from absl import flags
-from absl import app
+from glob import iglob
 import numpy as np
-from tqdm import tqdm
+import pandas as pd
+import syft as sy
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-import pandas as pd
+from absl import app
+from absl import flags
 from sklearn.preprocessing import StandardScaler
-import sklearn
-from glob import iglob
-import syft as sy
 from syft.federated.floptimizer import Optims
+from tqdm import tqdm
 
 # %%
+
 flags.DEFINE_integer('Batch_size', 64, 'The size of the batch from a round of training')
 flags.DEFINE_integer('Epochs', 5, 'The number of rounds of training')
 flags.DEFINE_float('Learn_rate', 0.001, 'The rate of learning by the optimizer')
@@ -88,7 +85,6 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
 
 # %%
 def cal_threshold(mse, input_dim):
-    # mse = np.mean(np.power(loss_val.real, 2), axis=1)
     print("mean is %.5f" % mse.mean())
     print("min is %.5f" % mse.min())
     print("max is %.5f" % mse.max())
@@ -154,6 +150,10 @@ class Net(nn.Module):
 # %%
 
 def main(argv):
+    if len(argv) > 2:
+        raise app.UsageError('Expected one command-line argument(s), '
+                             'got: {}'.format(argv))
+    # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim)
     # %%
@@ -180,6 +180,8 @@ def main(argv):
     # %%
     test(net,
          torch.from_numpy(x_test).float(), tr=1)
+
+    os._exit(0)
 
 
 if __name__ == '__main__':
