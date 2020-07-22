@@ -74,7 +74,7 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
 
             loss = loss_function(outputs, batch_y)
             loss.backward()
-            optimizer.step()  # Does the update
+            opt.step()  # Does the update
             net.get()
 
         print(f"Epoch: {epoch}. Loss: {loss.get()}")
@@ -99,8 +99,6 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def test(net, x_test, tr):
-    correct = 0
-    total = 0
     x_test = x_test.send("v")
     net.send(x_test.location)
     x_test_predictions = net(x_test)
@@ -179,10 +177,9 @@ def main(argv):
     print(tr)
     # %%
     test(net,
-         torch.from_numpy(x_test).float(), tr=1)
-
+         torch.from_numpy(x_test).float(), tr=tr)
     os._exit(0)
-
 
 if __name__ == '__main__':
     app.run(main)
+

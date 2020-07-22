@@ -1,37 +1,39 @@
 # %%
-import sys
-from glob import iglob
 import os
+from glob import iglob
 import numpy as np
 import pandas as pd
+import syft as sy
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from absl import flags
 from absl import app
+from absl import flags
 from sklearn.preprocessing import StandardScaler
+from syft.federated.floptimizer import Optims
 from tqdm import tqdm
 
 # %%
-flags.DEFINE_integer('Batch_size', 64, 'The size of the batch from a round of training')
-flags.DEFINE_integer('Epochs', 5, 'The number of rounds of training')
-flags.DEFINE_float('Learn_rate', 0.001, 'The rate of learning by the optimizer')
-flags.DEFINE_integer('Input_dim', 10, 'the input dimension, used from getting the train data')
+
+flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
+flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
+flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
+flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
 FLAGS = flags.FLAGS
+hook = sy.TorchHook(torch)
+v_hook = sy.VirtualWorker(hook=hook, id="v_hook")
+x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
+
+workers = ["v_hook", "x_hook"]
 
 
 # %%
 def get_train_data(top_n_features=10):
     print("Loading combined training data...")
-    df = pd.concat((pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)), ignore_index=True)
+    df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)), ignore_index=True)
     fisher = pd.read_csv('../fisher.csv')
-    # y_train = []
-    # with open("../data/labels.txt", 'r') as labels:
-    #    for lines in labels:
-    #        y_train.append(lines.rstrip())
     features = fisher.iloc[0:int(top_n_features)]['Feature'].values
     df = df[list(features)]
-    # return df, y_train
     return df, top_n_features
 
 
@@ -47,45 +49,47 @@ def create_scalar(x_opt, x_test, x_train):
 
 # %%
 def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
-    outputs = 0
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
-    loss = 0
-    batch_y = 0
+    batch_x, batch_y, data, outputs, loss = 0, 0, 0, 0, 0
+    optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            # batch_x = x_train[i:i + BATCH_SIZE]
-            # batch_x = x_train.view(i, BATCH_SIZE)
-            # print("bx", batch_x.size())
-
+            batch_x = x_train[i:i + batch_size]
             batch_y = x_opt[i:i + batch_size]
-            # batch_y = x_train.view(-1, 784)
-            # print("by", batch_y.size())
-            net.zero_grad()
-            # batch_x.view(batch_y.shape[0])
-            outputs = net(batch_y)
-            # print('out', outputs)
+            data_x = batch_x[::2]
+            data_y = batch_x[1::2]
+            target_x = batch_y[::2]
+            target_y = batch_y[1::2]
+            data_y = data_y.send(x_hook)
+            data_x = data_x.send(v_hook)
+            target_x = target_x.send(v_hook)
+            target_y = target_y.send(x_hook)
+            datasets = [(data_x, target_x), (data_y, target_y)]
+            for data, target in datasets:
+                net.send(data.location)
+                opt = optims.get_optim(data.location.id)
+                opt.zero_grad()
+                outputs = net(data)
+                loss = loss_function(outputs, data)
+                loss.backward()
+                opt.step()
+                net.get()
 
-            loss = loss_function(outputs, batch_y)
-            loss.backward()
-            optimizer.step()  # Does the update
+        print(f"Epoch: {epoch}. Loss 1: {loss.get()}")
 
-        print(f"Epoch: {epoch}. Loss: {loss}")
-        # print("opt", x_opt.size(), "output", outputs.__sizeof__())
-
-    return np.mean(np.power(batch_y.data.numpy() - outputs.data.numpy(), 2), axis=1)
+    return np.mean(np.power(data.get().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
 
 
 # %%
 def cal_threshold(mse, input_dim):
-    # mse = np.mean(np.power(loss_val.real, 2), axis=1)
     print("mean is %.5f" % mse.mean())
     print("min is %.5f" % mse.min())
     print("max is %.5f" % mse.max())
     print("std is %.5f" % mse.std())
 
     tr = mse.mean() + mse.std()
-    with open(f'threshold_centralized_{input_dim}', 'w') as t:
+    with open(f'threshold_federated_{input_dim}', 'w') as t:
         t.write(str(tr))
     print(f"Calculated threshold is {tr}")
     return tr
@@ -93,11 +97,12 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def test(net, x_test, tr):
-    correct = 0
-    total = 0
-    x_test_predictions = net(x_test)
+    data_x = x_test
+    data_x = data_x.send(v_hook)
+    net.send(data_x.location)
+    x_test_predictions = net(data_x)
     print("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(x_test.data.numpy() - x_test_predictions.data.numpy(), 2), axis=1)
+    mse_test = np.mean(np.power(data_x.get().data.numpy() - x_test_predictions.get().data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
@@ -139,19 +144,21 @@ class Net(nn.Module):
         return torch.softmax(x, dim=1)
 
 
+# %%
+
 def main(argv):
     if len(argv) > 2:
         raise app.UsageError('Expected one command-line argument(s), '
                              'got: {}'.format(argv))
-
-    inpurt_dim = FLAGS.Input_dim
     # %%
-    net = Net(inpurt_dim)
+    input_dim = FLAGS.Input_dim
+    net = Net(input_dim)
     # %%
-    training_data, input_dim = get_train_data(inpurt_dim)
-    x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
-                                      [int(1 / 3 * len(training_data)),
-                                       int(2 / 3 * len(training_data))])
+    training_data, input_dim = get_train_data(input_dim)
+    x_train, x_opt, x_test = np.split(
+        training_data.sample(frac=1, random_state=1),
+        [int(1 / 3 * len(training_data)),
+         int(2 / 3 * len(training_data))])
     # %%
     x_train, x_opt, x_test = create_scalar(x_opt, x_test, x_train)
     # %%
@@ -159,21 +166,19 @@ def main(argv):
     epochs = FLAGS.Epochs
     learn_rate = FLAGS.Learn_rate
     # %%
-    mse = train(net,
-                torch.from_numpy(x_train).float(),
-                torch.from_numpy(x_opt).float(),
-                batch_size,
-                epochs,
+    mse = train(net=net,
+                x_train=torch.from_numpy(x_train).float(),
+                x_opt=torch.from_numpy(x_opt).float(),
+                batch_size=batch_size,
+                epochs=epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
     print(tr)
     # %%
     test(net,
-         torch.from_numpy(x_test).float(),
-         tr=tr)
+         torch.from_numpy(x_test).float(), tr=tr)
     os._exit(0)
 
 
 if __name__ == '__main__':
     app.run(main)
-

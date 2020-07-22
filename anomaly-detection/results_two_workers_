@@ -1,0 +1,47 @@
+With a learn rate of 0.001. epochs: 5, and a batch set of 64.
+Loading combined training data...
+100%|██████████| 1443/1443 [05:33<00:00,  4.32it/s]
+Epoch: 0. Loss 1: 0.34746432304382324
+100%|██████████| 1443/1443 [05:32<00:00,  4.34it/s]
+Epoch: 1. Loss 1: 0.3474291265010834
+100%|██████████| 1443/1443 [05:33<00:00,  4.33it/s]
+Epoch: 2. Loss 1: 0.34739455580711365
+100%|██████████| 1443/1443 [05:34<00:00,  4.31it/s]
+Epoch: 3. Loss 1: 0.3473607003688812
+100%|██████████| 1443/1443 [05:33<00:00,  4.32it/s]
+Epoch: 4. Loss 1: 0.34732741117477417
+mean is 0.34733
+min is 0.09881
+max is 2.24558
+std is 0.49256
+Calculated threshold is 0.83988356590271
+0.83988357
+Calculating MSE on test set...
+6727 false positives on dataset without attacks with size 92334
+Process finished with exit code 0
+
+With a learn rate of 0.01. epochs: 5, and a batch set of 64.
+Loading combined training data...
+100%|██████████| 1443/1443 [05:31<00:00,  4.35it/s]
+Epoch: 0. Loss 1: 0.34223702549934387
+100%|██████████| 1443/1443 [05:32<00:00,  4.34it/s]
+Epoch: 1. Loss 1: 0.34261390566825867
+100%|██████████| 1443/1443 [05:31<00:00,  4.35it/s]
+Epoch: 2. Loss 1: 0.34293892979621887
+100%|██████████| 1443/1443 [05:31<00:00,  4.35it/s]
+Epoch: 3. Loss 1: 0.34322232007980347
+100%|██████████| 1443/1443 [05:35<00:00,  4.30it/s]
+Epoch: 4. Loss 1: 0.34347134828567505
+mean is 0.34347
+min is 0.09463
+max is 2.21232
+std is 0.48275
+Calculated threshold is 0.8262238502502441
+0.82622385
+Calculating MSE on test set...
+6739 false positives on dataset without attacks with size 92334
+Process finished with exit code 0
+
+With a learn rate of 0.1. epochs: 5, and a batch set of 64.
+
+With a learn rate of 1.0. epochs: 5, and a batch set of 64.
