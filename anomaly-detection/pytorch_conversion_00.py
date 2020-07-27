@@ -11,6 +11,10 @@ from absl import flags
 from absl import app
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.tensorboard import SummaryWriter
 
 # %%
 flags.DEFINE_integer('Batch_size', 64, 'The size of the batch from a round of training')
@@ -18,6 +22,8 @@ flags.DEFINE_integer('Epochs', 5, 'The number of rounds of training')
 flags.DEFINE_float('Learn_rate', 0.001, 'The rate of learning by the optimizer')
 flags.DEFINE_integer('Input_dim', 10, 'the input dimension, used from getting the train data')
 FLAGS = flags.FLAGS
+
+writer = SummaryWriter("B:/projects/GRA/FederatedLearningAnalysis/anomaly-detection/log/centralized")
 
 
 # %%
@@ -52,26 +58,32 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     loss_function = nn.MSELoss()
     loss = 0
     batch_y = 0
+    running_loss = 0
+    running_correct = 0
+    steps_total = len(x_train)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            # batch_x = x_train[i:i + BATCH_SIZE]
-            # batch_x = x_train.view(i, BATCH_SIZE)
-            # print("bx", batch_x.size())
-
             batch_y = x_opt[i:i + batch_size]
-            # batch_y = x_train.view(-1, 784)
-            # print("by", batch_y.size())
             net.zero_grad()
-            # batch_x.view(batch_y.shape[0])
             outputs = net(batch_y)
-            # print('out', outputs)
 
             loss = loss_function(outputs, batch_y)
             loss.backward()
             optimizer.step()  # Does the update
 
-        print(f"Epoch: {epoch}. Loss: {loss}")
-        # print("opt", x_opt.size(), "output", outputs.__sizeof__())
+            running_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            #running_correct += (predicted == batch_y).sum().item()
+
+            if (i + 1) % 100 == 1:
+                print(f"Epoch: {epoch}. Step: {(i + 1) / steps_total}. Loss: {loss.item()}")
+                writer.add_scalar("training_loss", running_loss / 100, epochs * steps_total + i)
+                #writer.add_scalar("training_predicted", running_correct / 100, epochs * steps_total + i)
+                #writer.add_scalar("rough predicted", predicted/100, epochs * steps_total + i)
+                writer.add_text("input_dimension", str(FLAGS.Input_dim), epochs * steps_total + i)
+                print(f"running_loss: {running_loss}. t_correct: {running_correct}. input_dim: {FLAGS.Input_dim}")
+                running_loss = 0
+                running_correct = 0
 
     return np.mean(np.power(batch_y.data.numpy() - outputs.data.numpy(), 2), axis=1)
 
@@ -93,6 +105,7 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def test(net, x_test, tr):
+    writer.add_graph(net, x_test)
     correct = 0
     total = 0
     x_test_predictions = net(x_test)
@@ -103,15 +116,16 @@ def test(net, x_test, tr):
     test_size = mse_test.shape[0]
     print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
 
-    # with torch.no_grad():
-    #    for i in tqdm(range(len(x_test))):
-    #        real_class = torch.argmax(x_test[i])
-    #        net_out = net(x_test[i])
-    #        predicted_class = torch.argmax(net_out)
-    #        if predicted_class == real_class:
-    #            correct += 1
-    #        total += 1
-    # print("Accuracy: ", round(correct / total, 3))
+    with torch.no_grad():
+        for i in tqdm(range(len(x_test))):
+            real_class = torch.argmax(x_test[i])
+            net_out = net(x_test[i])
+            predicted_class = torch.argmax(net_out)
+            if predicted_class == real_class:
+                correct += 1
+            total += 1
+    print("Accuracy: ", round(correct / total, 3))
+    writer.add_scalar("testing_accuracy__", round(correct / total, 3))
 
 
 # %%
@@ -136,7 +150,7 @@ class Net(nn.Module):
         x = torch.tanh(self.fc6(x))
         x = torch.tanh(self.fc7(x))
         x = self.fc8(x)
-        return torch.softmax(x, dim=1)
+        return x
 
 
 def main(argv):
@@ -144,11 +158,12 @@ def main(argv):
         raise app.UsageError('Expected one command-line argument(s), '
                              'got: {}'.format(argv))
 
-    inpurt_dim = FLAGS.Input_dim
+    input_dim = FLAGS.Input_dim
+
     # %%
-    net = Net(inpurt_dim)
+    net = Net(input_dim)
     # %%
-    training_data, input_dim = get_train_data(inpurt_dim)
+    training_data, input_dim = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
                                       [int(1 / 3 * len(training_data)),
                                        int(2 / 3 * len(training_data))])
@@ -171,9 +186,9 @@ def main(argv):
     test(net,
          torch.from_numpy(x_test).float(),
          tr=tr)
+    writer.close()
     os._exit(0)
 
 
 if __name__ == '__main__':
     app.run(main)
-

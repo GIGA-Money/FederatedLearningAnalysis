@@ -12,6 +12,10 @@ from absl import flags
 from sklearn.preprocessing import StandardScaler
 from syft.federated.floptimizer import Optims
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.tensorboard import SummaryWriter
 
 # %%
 
@@ -22,9 +26,8 @@ flags.DEFINE_integer('Input_dim', 10, 'the input dimension, used from getting th
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v")
-# x_hook = sy.VirtualWorker(hook=hook, id="x")
-
 workers = ['v']
+writer = SummaryWriter("B:/projects/GRA/FederatedLearningAnalysis/anomaly-detection/log/singleworker")
 
 
 # %%
@@ -54,28 +57,35 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     loss_function = nn.MSELoss()
     loss = 0
     batch_y = 0
+    running_loss = 0
+    running_correct = 0
+    steps_total = len(x_train)
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_opt), batch_size)):
-            # batch_x = x_train[i:i + BATCH_SIZE]
-            # batch_x = x_train.view(i, BATCH_SIZE)
-            # print("bx", batch_x.size())
-
             batch_y = x_opt[i:i + batch_size]
             batch_y = batch_y.send('v')
             net.send(batch_y.location)
             opt = optims.get_optim(batch_y.location.id)
-            # batch_y = x_train.view(-1, 784)
-            # print("by", batch_y.size())
             opt.zero_grad()
-            # batch_x.view(batch_y.shape[0])
+
             outputs = net(batch_y)
-            # print('out', outputs)
 
             loss = loss_function(outputs, batch_y)
             loss.backward()
             opt.step()  # Does the update
             net.get()
+
+            running_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            running_correct += (predicted[0] == x_train).sum().item()
+            if (i + 1) % 100 == 0:
+                print(f"Epoch: {epoch}. Step: {(i + 1) / steps_total}. Loss: {loss.item()}")
+                writer.add_scalar("training loss", running_loss / 100, epochs * steps_total + i)
+                writer.add_scalar("training predicted", running_correct / 100, epochs * steps_total + i)
+                writer.add_text("input dimension", str(input_dim), epochs * steps_total + i)
+                running_loss = 0
+                running_correct = 0
 
         print(f"Epoch: {epoch}. Loss: {loss.get()}")
         # print("opt", x_opt.size(), "output", outputs.__sizeof__())
@@ -108,16 +118,6 @@ def test(net, x_test, tr):
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
     print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
-
-    # with torch.no_grad():
-    #    for i in tqdm(range(len(x_test))):
-    #        real_class = torch.argmax(x_test[i])
-    #        net_out = net(x_test[i])
-    #        predicted_class = torch.argmax(net_out)
-    #        if predicted_class == real_class:
-    #            correct += 1
-    #        total += 1
-    # print("Accuracy: ", round(correct / total, 3))
 
 
 # %%
@@ -178,8 +178,9 @@ def main(argv):
     # %%
     test(net,
          torch.from_numpy(x_test).float(), tr=tr)
+    writer.close()
     os._exit(0)
+
 
 if __name__ == '__main__':
     app.run(main)
-
