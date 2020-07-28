@@ -62,8 +62,8 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     steps_total = len(x_train)
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
-        for i in tqdm(range(0, len(x_opt), batch_size)):
-            batch_y = x_opt[i:i + batch_size]
+        for i in tqdm(range(0, len(x_train), batch_size)):
+            batch_y = x_train[i:i + batch_size]
             batch_y = batch_y.send('v')
             net.send(batch_y.location)
             opt = optims.get_optim(batch_y.location.id)
@@ -83,7 +83,7 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 print(f"Epoch: {epoch}. Step: {(i + 1) / steps_total}. Loss: {loss.item()}")
                 writer.add_scalar("training loss", running_loss / 100, epochs * steps_total + i)
                 writer.add_scalar("training predicted", running_correct / 100, epochs * steps_total + i)
-                writer.add_text("input dimension", str(input_dim), epochs * steps_total + i)
+                #writer.add_text("input dimension", str(input_dim), epochs * steps_total + i)
                 running_loss = 0
                 running_correct = 0
 

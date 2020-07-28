@@ -11,6 +11,7 @@ from absl import flags
 from absl import app
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import torchvision
 import torchvision.transforms as transforms
@@ -61,29 +62,34 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     running_loss = 0
     running_correct = 0
     steps_total = len(x_train)
+
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_y = x_opt[i:i + batch_size]
+            batch_y = x_train[i:i + batch_size]
             net.zero_grad()
             outputs = net(batch_y)
+            # writer.add_graph(net, batch_y)
 
-            loss = loss_function(outputs, batch_y)
-            loss.backward()
+            train_loss = loss_function(outputs, batch_y)
+            train_loss.backward()
             optimizer.step()  # Does the update
+            loss += train_loss.item()
+            running_loss += train_loss.item()
+            # _, predicted = torch.max(outputs.data, 1)
+            # running_correct += (outputs.round() == batch_y).float().sum()
 
-            running_loss += loss.item()
-            _, predicted = torch.max(outputs.data, 1)
-            #running_correct += (predicted == batch_y).sum().item()
-
-            if (i + 1) % 100 == 1:
-                print(f"Epoch: {epoch}. Step: {(i + 1) / steps_total}. Loss: {loss.item()}")
-                writer.add_scalar("training_loss", running_loss / 100, epochs * steps_total + i)
-                #writer.add_scalar("training_predicted", running_correct / 100, epochs * steps_total + i)
-                #writer.add_scalar("rough predicted", predicted/100, epochs * steps_total + i)
-                writer.add_text("input_dimension", str(FLAGS.Input_dim), epochs * steps_total + i)
-                print(f"running_loss: {running_loss}. t_correct: {running_correct}. input_dim: {FLAGS.Input_dim}")
+            if i % 100 == 0:
+                print(f"Epoch: {epoch}. Step: {(i + 1) / steps_total:.3f}. Loss: {loss:.3f}")
+                # writer.add_scalar("training_loss", running_loss / len(x_train), epochs * steps_total + i)
+                # writer.add_scalar("training_predicted", running_correct / 100, epochs * steps_total + i)
+                # writer.add_scalar("rough predicted", predicted/100, epochs * steps_total + i)
+                # writer.add_text("input_dimension", str(FLAGS.Input_dim), epochs * steps_total + i)
+                print(f"running_loss: {running_loss:.3f}.")
+                # t_correct: {running_correct}. input_dim: {FLAGS.Input_dim}")
                 running_loss = 0
-                running_correct = 0
+                # running_correct = 0
+        loss = loss/outputs.shape[0]
+        print(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.3f}. Loss: {loss:.3f}")
 
     return np.mean(np.power(batch_y.data.numpy() - outputs.data.numpy(), 2), axis=1)
 
@@ -97,6 +103,7 @@ def cal_threshold(mse, input_dim):
     print("std is %.5f" % mse.std())
 
     tr = mse.mean() + mse.std()
+    writer.add_scalar("threshold_over_learn_rate", tr, FLAGS.Learn_rate)
     with open(f'threshold_centralized_{input_dim}', 'w') as t:
         t.write(str(tr))
     print(f"Calculated threshold is {tr}")
@@ -106,26 +113,32 @@ def cal_threshold(mse, input_dim):
 # %%
 def test(net, x_test, tr):
     writer.add_graph(net, x_test)
-    correct = 0
-    total = 0
+    net.eval()
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
     mse_test = np.mean(np.power(x_test.data.numpy() - x_test_predictions.data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
-    print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+    # writer.add_text("false_positives_over_learn_rate", false_positives, global_step=0.001)
+    print(f"{false_positives:} false positives on dataset without attacks with size {test_size}")
 
+
+'''
+    test_loss = 0
+    correct = 0
     with torch.no_grad():
         for i in tqdm(range(len(x_test))):
-            real_class = torch.argmax(x_test[i])
-            net_out = net(x_test[i])
-            predicted_class = torch.argmax(net_out)
-            if predicted_class == real_class:
-                correct += 1
-            total += 1
-    print("Accuracy: ", round(correct / total, 3))
-    writer.add_scalar("testing_accuracy__", round(correct / total, 3))
+            output = net(x_test)
+            test_loss += F.softmax(output).item()
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(x_test.view_as(pred)).sum().item()
+    test_loss /= len(x_test)
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(x_test),
+        100. * correct / len(x_test)))
+    # writer.add_scalar("testing_accuracy__", round(correct / total, 3), global_step=i)
+'''
 
 
 # %%
