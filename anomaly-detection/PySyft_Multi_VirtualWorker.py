@@ -76,7 +76,7 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 opt.step()
                 net.get()
 
-        print(f"Epoch: {epoch}. Loss 1: {loss.get()}")
+        print(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
 
     return np.mean(np.power(data.get().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
 
@@ -98,6 +98,7 @@ def cal_threshold(mse, input_dim):
 # %%
 def test(net, x_test, tr):
     data_x = x_test
+    net.eval()
     data_x = data_x.send(v_hook)
     net.send(data_x.location)
     x_test_predictions = net(data_x)

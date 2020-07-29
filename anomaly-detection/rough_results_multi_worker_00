@@ -1,0 +1,32 @@
+PySyft implementation.
+
+With a learn rate of 0.001. epochs: 5, and a batch set of 64.
+
+
+With a learn rate of 0.01. epochs: 5, and a batch set of 64.
+
+
+with learn rate of 0.1 e: 5, batch size: 64
+
+
+with learn rate of 1.0 e: 5, batch size: 64
+Loading combined training data...
+100%|██████████| 1443/1443 [30:07<00:00,  1.25s/it]
+Epoch: 0. Loss 1: 0.2730437219142914
+100%|██████████| 1443/1443 [30:00<00:00,  1.25s/it]
+Epoch: 1. Loss 1: 0.27300307154655457
+100%|██████████| 1443/1443 [29:34<00:00,  1.23s/it]
+Epoch: 2. Loss 1: 0.26962631940841675
+100%|██████████| 1443/1443 [29:38<00:00,  1.23s/it]
+Epoch: 3. Loss 1: 0.26737597584724426
+100%|██████████| 1443/1443 [29:51<00:00,  1.24s/it]
+Epoch: 4. Loss 1: 0.26648592948913574
+mean is 0.26649
+min is 0.03873
+max is 2.72878
+std is 0.57594
+Calculated threshold is 0.8424299955368042
+0.84243
+Calculating MSE on test set...
+7337 false positives on dataset without attacks with size 92334
+Process finished with exit code 0
