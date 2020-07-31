@@ -89,7 +89,7 @@ def cal_threshold(mse, input_dim):
     print("std is %.5f" % mse.std())
 
     tr = mse.mean() + mse.std()
-    with open(f'threshold_federated_{input_dim}', 'w') as t:
+    with open(f'threshold_federated_MultiWorker{input_dim}', 'w') as t:
         t.write(str(tr))
     print(f"Calculated threshold is {tr}")
     return tr
