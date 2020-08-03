@@ -22,8 +22,14 @@ flags.DEFINE_integer('Batch_size', 64, 'The size of the batch from a round of tr
 flags.DEFINE_integer('Epochs', 5, 'The number of rounds of training')
 flags.DEFINE_float('Learn_rate', 0.001, 'The rate of learning by the optimizer')
 flags.DEFINE_integer('Input_dim', 10, 'the input dimension, used from getting the train data')
+flags.DEFINE_string('Current_dir', os.path.dirname(os.path.abspath(__file__)), 'the current directory')
 FLAGS = flags.FLAGS
-
+if torch.cuda.is_available():
+    device = torch.device("cuda:1")
+    print("Running on the GPU")
+else:
+    device = torch.device("cpu")
+    print("Running on the CPU")
 writer = SummaryWriter("B:/projects/GRA/FederatedLearningAnalysis/anomaly-detection/log/centralized")
 
 
@@ -59,37 +65,18 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     loss_function = nn.MSELoss()
     loss = 0
     batch_y = 0
-    running_loss = 0
-    running_correct = 0
-    steps_total = len(x_train)
-
+    train_loss = 0
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
             batch_y = x_train[i:i + batch_size]
+            batch_y = batch_y.to(device)
             net.zero_grad()
             outputs = net(batch_y)
-            # writer.add_graph(net, batch_y)
-
             train_loss = loss_function(outputs, batch_y)
             train_loss.backward()
             optimizer.step()  # Does the update
-            loss += train_loss.item()
-            running_loss += train_loss.item()
-            # _, predicted = torch.max(outputs.data, 1)
-            # running_correct += (outputs.round() == batch_y).float().sum()
 
-            if i % 100 == 0:
-                print(f"Epoch: {epoch}. Step: {(i + 1) / steps_total:.3f}. Loss: {loss:.3f}")
-                # writer.add_scalar("training_loss", running_loss / len(x_train), epochs * steps_total + i)
-                # writer.add_scalar("training_predicted", running_correct / 100, epochs * steps_total + i)
-                # writer.add_scalar("rough predicted", predicted/100, epochs * steps_total + i)
-                # writer.add_text("input_dimension", str(FLAGS.Input_dim), epochs * steps_total + i)
-                print(f"running_loss: {running_loss:.3f}.")
-                # t_correct: {running_correct}. input_dim: {FLAGS.Input_dim}")
-                running_loss = 0
-                # running_correct = 0
-        loss = loss/outputs.shape[0]
-        print(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.3f}. Loss: {loss:.3f}")
+        print(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.3f}.")
 
     return np.mean(np.power(batch_y.data.numpy() - outputs.data.numpy(), 2), axis=1)
 
@@ -104,7 +91,7 @@ def cal_threshold(mse, input_dim):
 
     tr = mse.mean() + mse.std()
     writer.add_scalar("threshold_over_learn_rate", tr, FLAGS.Learn_rate)
-    with open(f'threshold_centralized_{input_dim}', 'w') as t:
+    with open(f'threshold_centralized/threshold_centralized_{input_dim}', 'w') as t:
         t.write(str(tr))
     print(f"Calculated threshold is {tr}")
     return tr
@@ -170,11 +157,10 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError('Expected one command-line argument(s), '
                              'got: {}'.format(argv))
-
     input_dim = FLAGS.Input_dim
-
     # %%
     net = Net(input_dim)
+    net.to(device)
     # %%
     training_data, input_dim = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
@@ -200,6 +186,8 @@ def main(argv):
          torch.from_numpy(x_test).float(),
          tr=tr)
     writer.close()
+    PATH = FLAGS.Current_dir+"PyModels/centralizedModel"
+    torch.save(net.state_dict(), os.path.join(PATH , f"centralized_base_{tr:.3f}."))
     os._exit(0)
 
 
