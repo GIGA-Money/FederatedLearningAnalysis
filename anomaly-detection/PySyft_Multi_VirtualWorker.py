@@ -19,6 +19,7 @@ flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of tr
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
+flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v_hook")
@@ -30,9 +31,10 @@ workers = ["v_hook", "x_hook"]
 # %%
 def get_train_data(top_n_features=10):
     print("Loading combined training data...")
-    df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)), ignore_index=True)
-    fisher = pd.read_csv('../fisher.csv')
-    features = fisher.iloc[0:int(top_n_features)]['Feature'].values
+    df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
+                   ignore_index=True)
+    fisher = pd.read_csv("../fisher.csv")
+    features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
     return df, top_n_features
 
@@ -75,9 +77,7 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 loss.backward()
                 opt.step()
                 net.get()
-
         print(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
-
     return np.mean(np.power(data.get().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
 
 
@@ -89,7 +89,7 @@ def cal_threshold(mse, input_dim):
     print("std is %.5f" % mse.std())
 
     tr = mse.mean() + mse.std()
-    with open(f'threshold_federated_MultiWorker{input_dim}', 'w') as t:
+    with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
         t.write(str(tr))
     print(f"Calculated threshold is {tr}")
     return tr
@@ -108,16 +108,6 @@ def test(net, x_test, tr):
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
     print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
-
-    # with torch.no_grad():
-    #    for i in tqdm(range(len(x_test))):
-    #        real_class = torch.argmax(x_test[i])
-    #        net_out = net(x_test[i])
-    #        predicted_class = torch.argmax(net_out)
-    #        if predicted_class == real_class:
-    #            correct += 1
-    #        total += 1
-    # print("Accuracy: ", round(correct / total, 3))
 
 
 # %%
@@ -146,11 +136,10 @@ class Net(nn.Module):
 
 
 # %%
-
 def main(argv):
     if len(argv) > 2:
-        raise app.UsageError('Expected one command-line argument(s), '
-                             'got: {}'.format(argv))
+        raise app.UsageError("Expected one command-line argument(s), "
+                             f"got: {argv}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim)
@@ -178,6 +167,8 @@ def main(argv):
     # %%
     test(net,
          torch.from_numpy(x_test).float(), tr=tr)
+    PATH = FLAGS.Current_dir + "PyModels/multiModel"
+    torch.save(net.state_dict(), os.path.join(PATH, f"multiworker_base_{tr:.3f}.pt"))
     os._exit(0)
 
 

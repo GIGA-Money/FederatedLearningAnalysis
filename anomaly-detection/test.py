@@ -4,7 +4,7 @@ import numpy as np
 import random
 from keras.models import load_model
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
+# from sklearn.metrics import confusion_matrix
 from glob import iglob
 from sklearn.metrics import recall_score, accuracy_score, precision_score, confusion_matrix
 import lime
