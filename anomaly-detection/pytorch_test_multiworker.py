@@ -20,12 +20,14 @@ flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting t
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 FLAGS = flags.FLAGS
-if torch.cuda.is_available():
-    device = torch.device("cuda:1")
-    print("Running on the GPU")
-else:
-    device = torch.device("cpu")
-    print("Running on the CPU")
+
+
+# if torch.cuda.is_available():
+#    device = torch.device("cuda:1")
+#    print("Running on the GPU")
+# else:
+#    device = torch.device("cpu")
+#    print("Running on the CPU")
 
 
 # %%
@@ -128,9 +130,16 @@ def printing_press(Y_pred, Y_test):
 # %%
 def load_model(PATH, top_n_features):
     print(f"Loading model")
+    pretrained_dict = torch.load(PATH)
     saved_model = Net(top_n_features)
-    saved_model.load_state_dict(torch.load(PATH))
-    saved_model.to(device)
+    model_dict = saved_model.state_dict()
+
+    pretrained_dict = {k: v for k,
+                       v in pretrained_dict.items()
+                       if k in model_dict}
+    model_dict.update(pretrained_dict)
+    saved_model.load_state_dict(model_dict, strict=False)
+
     saved_model.eval()
     return saved_model
 

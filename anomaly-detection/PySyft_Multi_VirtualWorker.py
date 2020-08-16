@@ -168,7 +168,11 @@ def main(argv):
     test(net,
          torch.from_numpy(x_test).float(), tr=tr)
     PATH = FLAGS.Current_dir + "PyModels/multiModel"
-    torch.save(net.state_dict(), os.path.join(PATH, f"multiworker_base_{tr:.3f}.pt"))
+
+    torch.save(net.state_dict(), os.path.join(PATH, f"multiworker_base_{tr:.3f}.pt"),
+               _use_new_zipfile_serialization=False)
+
+
     os._exit(0)
 
 

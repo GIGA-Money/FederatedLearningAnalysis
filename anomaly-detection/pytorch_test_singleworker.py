@@ -120,7 +120,7 @@ def printing_press(Y_pred, Y_test):
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
-                                        title="Centralized Test",
+                                        title="single worker Test",
                                         text_fontsize="large")
     plt.show()
 
