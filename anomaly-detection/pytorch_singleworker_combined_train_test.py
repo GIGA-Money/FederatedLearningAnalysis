@@ -28,7 +28,7 @@ flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting t
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 
 if torch.cuda.is_available():
-    device = torch.device("cuda:1")
+    device = torch.device("cuda:0")
     print("Running on the GPU")
 else:
     device = torch.device("cpu")
@@ -50,6 +50,7 @@ def get_train_data(top_n_features=10):
     features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
     return df, top_n_features, features
+
 
 # %%
 def load_mal_data():
@@ -112,14 +113,18 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def evaluation(net, x_test, tr):
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    x_test = x_test.to(device)
     x_test = x_test.send('v')
+    net.get()
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
-    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2), axis=1)
+
+    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
+                       axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
@@ -159,6 +164,7 @@ def printing_press(Y_pred, Y_test):
                                         title="single worker Test",
                                         text_fontsize="large")
     plt.show()
+
 
 # %%
 def lime_writing(X_test, Y_test, df, model, x_train):
@@ -265,7 +271,7 @@ def main(argv):
                 epochs=epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
-    print(tr)
+    # print(tr)
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(), tr=tr)
