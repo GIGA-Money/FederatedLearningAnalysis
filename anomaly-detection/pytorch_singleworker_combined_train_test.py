@@ -83,8 +83,8 @@ def train(net, x_train, batch_size, epochs, learn_rate):
         for i in tqdm(range(0, len(x_train), batch_size)):
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            batch_x = x_train[i:i + batch_size]
-            batch_x = batch_x.send('v').to(device)
+            batch_x = x_train[i:i + batch_size].to(device)
+            batch_x = batch_x.send('v')
             net.send(batch_x.location)
             opt = optims.get_optim(batch_x.location.id)
             opt.zero_grad()
@@ -112,6 +112,7 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def evaluation(net, x_test, tr):
+    x_test = x_test.to(device)
     x_test = x_test.send('v')
     net.eval()
     net.send(x_test.location)
@@ -210,7 +211,8 @@ class AnomalyModel:
 
     def predict(self, x):
         self.model = self.model.get()
-        x = x.send('testing').to(device)
+        x = x.to(device)
+        x = x.send('testing')
         self.model.send(x.location)
         x_pred = self.model(x)
         if torch.cuda.is_available():
