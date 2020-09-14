@@ -162,7 +162,7 @@ def printing_press(Y_pred, Y_test):
                                         Y_pred,
                                         title="single worker Test",
                                         text_fontsize="large")
-    plt.show()
+    plt.savefig()
 
 
 # %%
