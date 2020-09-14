@@ -37,8 +37,9 @@ else:
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v")
+eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
-workers = ['v', 'testing']
+workers = ['v', 'eval', 'testing']
 
 
 # %%
@@ -113,12 +114,15 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def evaluation(net, x_test, tr):
-    x_test = x_test.send('v')
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    x_test = x_test.to(device)
+    net.get()
+    x_test = x_test.send('eval')
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
-
     mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
                        axis=1)
     over_tr = mse_test > tr
