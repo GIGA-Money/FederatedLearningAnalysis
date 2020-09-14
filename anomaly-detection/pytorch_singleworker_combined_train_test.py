@@ -28,7 +28,7 @@ flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting t
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 
 if torch.cuda.is_available():
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:1")
     print("Running on the GPU")
 else:
     device = torch.device("cpu")
@@ -113,11 +113,7 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def evaluation(net, x_test, tr):
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
-    x_test = x_test.to(device)
     x_test = x_test.send('v')
-    net.get()
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
