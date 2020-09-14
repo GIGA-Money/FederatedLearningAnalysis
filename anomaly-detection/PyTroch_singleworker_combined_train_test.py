@@ -26,6 +26,14 @@ flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
+
+if torch.cuda.is_available():
+    device = torch.device("cuda:1")
+    print("Running on the GPU")
+else:
+    device = torch.device("cpu")
+    print("Running on the CPU")
+
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v")
@@ -73,8 +81,10 @@ def train(net, x_train, batch_size, epochs, learn_rate):
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
             batch_x = x_train[i:i + batch_size]
-            batch_x = batch_x.send('v')
+            batch_x = batch_x.send('v').to(device)
             net.send(batch_x.location)
             opt = optims.get_optim(batch_x.location.id)
             opt.zero_grad()
@@ -84,7 +94,7 @@ def train(net, x_train, batch_size, epochs, learn_rate):
             opt.step()
             net.get()
         print(f"Epoch: {epoch}. Loss: {loss.get()}")
-    return np.mean(np.power(batch_x.get().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
+    return np.mean(np.power(batch_x.get().cpu().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
 
 
 # %%
@@ -107,7 +117,7 @@ def evaluation(net, x_test, tr):
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(x_test.get().data.numpy() - x_test_predictions.get().data.numpy(), 2), axis=1)
+    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
@@ -132,7 +142,7 @@ def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features,
     #   printing to console
     printing_press(Y_pred, Y_test)
     #  writing to lime html files
-    lime_writing(X_test, Y_test, df, model, x_trainer)
+    # lime_writing(X_test, Y_test, df, model, x_trainer)
 
 
 # %%
@@ -199,10 +209,13 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
-        x = x.send('testing')
+        self.model = self.model.get()
+        x = x.send('testing').to(device)
         self.model.send(x.location)
         x_pred = self.model(x)
-        mse = np.mean(np.power(x.get().data.numpy() - x_pred.get().data.numpy(), 2), axis=1)
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        mse = np.mean(np.power(x.get().cpu().data.numpy() - x_pred.get().cpu().data.numpy(), 2), axis=1)
         y_pred = mse > self.threshold
         return y_pred.astype(int)
 
