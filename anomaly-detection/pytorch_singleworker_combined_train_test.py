@@ -132,7 +132,7 @@ def evaluation(net, x_test, tr):
 
 # %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
-    print(f"Calculated threshold is {tr}")
+    print(f"Calculated threshold is {tr} for testing with data")
     model = AnomalyModel(net, tr, scalar)
     #   pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
@@ -216,8 +216,9 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
-        self.model = self.model.get()
+        x = x.to(device)
         x = x.send('testing')
+        self.model = self.model.get()
         self.model.send(x.location)
         x_pred = self.model(x)
         if torch.cuda.is_available():
