@@ -81,8 +81,6 @@ def train(net, x_train, batch_size, epochs, learn_rate):
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            if torch.cuda.is_available():
-                torch.cuda.synchronize()
             batch_x = x_train[i:i + batch_size].to(device)
             batch_x = batch_x.send('v')
             net.send(batch_x.location)
@@ -93,6 +91,8 @@ def train(net, x_train, batch_size, epochs, learn_rate):
             loss.backward()
             opt.step()
             net.get()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
         print(f"Epoch: {epoch}. Loss: {loss.get()}")
     return np.mean(np.power(batch_x.get().cpu().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
 
@@ -118,6 +118,8 @@ def evaluation(net, x_test, tr):
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
     mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
