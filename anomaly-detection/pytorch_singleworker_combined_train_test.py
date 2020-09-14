@@ -94,7 +94,7 @@ def train(net, x_train, batch_size, epochs, learn_rate):
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
         print(f"Epoch: {epoch}. Loss: {loss.get()}")
-    return np.mean(np.power(batch_x.get().cpu().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
+    return np.mean(np.power(batch_x.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
 # %%
