@@ -155,10 +155,13 @@ def cal_threshold(mse, input_dim):
 
 # %%
 def evaluation(net, x_test, tr):
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    x_test = x_test.to(device)
     net.eval()
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(x_test.data.numpy() - x_test_predictions.data.numpy(), 2), axis=1)
+    mse_test = np.mean(np.power(x_test.cpu().data.numpy() - x_test_predictions.cpu().data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
