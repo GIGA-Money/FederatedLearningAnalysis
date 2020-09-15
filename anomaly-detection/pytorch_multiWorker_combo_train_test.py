@@ -31,7 +31,7 @@ FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v_hook")
 x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
-
+eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
     device1 = torch.device("cuda:1")
@@ -42,7 +42,7 @@ else:
     device1 = torch.device("cpu")
     #device2 = torch.device("cpu")
     print("Running on the CPU")
-workers = ["v_hook", "x_hook"]
+workers = ["v_hook", "x_hook", "eval"]
 
 
 # %%
@@ -211,13 +211,13 @@ def cal_threshold(mse, input_dim):
 def evaluation(net, x_test, tr):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-    data_x = x_test.to(device1)
-    data_x = data_x.send(v_hook)
+    x_test = x_test.to(device1)
+    x_test = x_test.send('eval')
     net.eval()
-    net.send(data_x.location)
-    x_test_predictions = net(data_x)
+    net.send(x_test.location)
+    x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(data_x.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
+    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
                        axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
