@@ -135,7 +135,7 @@ def load_model(PATH, top_n_features):
     model_dict = saved_model.state_dict()
 
     pretrained_dict = {k: v for k,
-                       v in pretrained_dict.items()
+                                v in pretrained_dict.items()
                        if k in model_dict}
     model_dict.update(pretrained_dict)
     saved_model.load_state_dict(model_dict, strict=False)
@@ -149,7 +149,7 @@ def testing(top_n_features):
     print("Testing")
     df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv",
                                                   recursive=True)), ignore_index=True)
-    fisher = pd.read_csv("../fisher.csv")
+    fisher = pd.read_csv("../../fisher.csv")
     features = fisher.iloc[0:int(top_n_features)]['Feature'].values
     df = df[list(features)]
     x_train, x_opt, x_test = np.split(df.sample(frac=1, random_state=17), [int(1 / 3 * len(df)), int(2 / 3 * len(df))])
@@ -159,9 +159,9 @@ def testing(top_n_features):
 
 
 # %% *UNUSED*
-def get_one_hot(targets, nb_classes):
-    res = np.eye(nb_classes)[np.array(targets).reshape(-1)]
-    return res.reshape(list(targets.shape) + [nb_classes])
+# def get_one_hot(targets, nb_classes):
+#    res = np.eye(nb_classes)[np.array(targets).reshape(-1)]
+#    return res.reshape(list(targets.shape) + [nb_classes])
 
 
 # %%

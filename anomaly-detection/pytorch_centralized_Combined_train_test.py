@@ -33,7 +33,6 @@ else:
 FLAGS = flags.FLAGS
 
 
-
 # %%
 def get_train_data(top_n_features=115):
     print("Loading combined training data...")
@@ -63,7 +62,7 @@ def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features,
     # %% printing to console
     printing_press(Y_pred, Y_test)
     # %% writing to lime html files
-    lime_writing(X_test, Y_test, df, model, x_trainer)
+    # lime_writing(X_test, Y_test, df, model, x_trainer)
 
 
 # %%
@@ -89,7 +88,8 @@ def printing_press(Y_pred, Y_test):
                                         Y_pred,
                                         title="Centralized Test",
                                         text_fontsize="large")
-    plt.show()
+    plt.savefig(
+        f"figures/centralized/confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 
 
 # %%
@@ -129,8 +129,7 @@ def train(net, x_train, batch_size, epochs, learn_rate):
     train_loss = 0
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_x = x_train[i:i + batch_size]
-            batch_x = batch_x.to(device)
+            batch_x = x_train[i:i + batch_size].to(device)
             net.zero_grad()
             outputs = net(batch_x)
             train_loss = loss_function(outputs, batch_x)
@@ -138,7 +137,7 @@ def train(net, x_train, batch_size, epochs, learn_rate):
             optimizer.step()
         print(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
 
-    return np.mean(np.power(batch_x.data.numpy().real - outputs.data.numpy(), 2), axis=1)
+    return np.mean(np.power(batch_x.cpu().data.numpy().real - outputs.cpu().data.numpy(), 2), axis=1)
 
 
 # %%
@@ -199,8 +198,11 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        x = x.to(device)
         x_pred = self.model(x)
-        mse = np.mean(np.power(x.data.numpy() - x_pred.data.numpy(), 2), axis=1)
+        mse = np.mean(np.power(x.cpu().data.numpy() - x_pred.cpu().data.numpy(), 2), axis=1)
         y_pred = mse > self.threshold
         return y_pred.astype(int)
 
@@ -220,10 +222,11 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
-    input_dim = FLAGS.Input_dim
+
     # %%
-    net = Net(input_dim)
-    net.to(device)
+    input_dim = FLAGS.Input_dim
+    net = Net(input_dim).to(device)
+
     # %%
     print(f"Training--------------------")
     training_data, input_dim, features = get_train_data(input_dim)
