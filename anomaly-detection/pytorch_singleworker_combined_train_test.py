@@ -267,7 +267,7 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float(),
+                x_train=torch.from_numpy(x_train).float().to(device),
                 batch_size=batch_size,
                 epochs=epochs,
                 learn_rate=learn_rate)
@@ -275,7 +275,7 @@ def main(argv):
     # print(tr)
     # %%
     evaluation(net,
-               torch.from_numpy(x_test).float(),
+               torch.from_numpy(x_test).float().to(device),
                tr=tr)
     # -----------------------------
     print(f"Testing--------------------")
