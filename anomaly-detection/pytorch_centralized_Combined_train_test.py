@@ -1,7 +1,7 @@
 # %%
 import os
 from glob import iglob
-
+import logging
 import lime
 import lime.lime_tabular
 import matplotlib.pyplot as plt
@@ -24,18 +24,23 @@ flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
+FLAGS = flags.FLAGS
 if torch.cuda.is_available():
     device = torch.device("cuda:2")
-    print(f"Running on the GPU: {device}")
+    logging.warning(f"Running on the GPU: {device}")
 else:
     device = torch.device("cpu")
-    print(f"Running on the CPU: {device}")
-FLAGS = flags.FLAGS
+    logging.warning(f"Running on the CPU: {device}")
+
+logging.basicConfig(
+    filename=f"figures/centralized/centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+    level=logging.DEBUG,
+    format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
 
 
 # %%
 def get_train_data(top_n_features=115):
-    print("Loading combined training data...")
+    logging.debug("Loading combined training data...")
     df = pd.concat((
         pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
         ignore_index=True)
@@ -47,7 +52,7 @@ def get_train_data(top_n_features=115):
 
 # %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
-    print(f"Calculated threshold is {tr}")
+    logging.info(f"Calculated threshold is {tr}")
     model = AnomalyModel(net, tr, scalar)
     # %% pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
@@ -79,11 +84,11 @@ def load_mal_data():
 
 # %%
 def printing_press(Y_pred, Y_test):
-    print(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
-    print(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
-    print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
-    print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
-    print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    logging.debug(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    logging.debug(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
+    logging.debug(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    logging.debug(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
+    logging.debug(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Centralized Test",
@@ -135,21 +140,20 @@ def train(net, x_train, batch_size, epochs, learn_rate):
             train_loss = loss_function(outputs, batch_x)
             train_loss.backward()
             optimizer.step()
-        print(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
-
+        logging.debug(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
     return np.mean(np.power(batch_x.cpu().data.numpy().real - outputs.cpu().data.numpy(), 2), axis=1)
 
 
 # %%
 def cal_threshold(mse, input_dim):
-    print(f"mean is {mse.mean():.5f}")
-    print(f"min is {mse.min():.5f}")
-    print(f"max is {mse.max():.5f}")
-    print(f"std is {mse.std():.5f}")
+    logging.debug(f"mean is {mse.mean():.5f}")
+    logging.debug(f"min is {mse.min():.5f}")
+    logging.debug(f"max is {mse.max():.5f}")
+    logging.debug(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
     with open(f"threshold_centralized/threshold_centralized_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
         t.write(str(tr))
-    print(f"Calculated threshold is {tr:.5f}")
+    logging.debug(f"Calculated threshold is {tr:.5f}")
     return tr
 
 
@@ -160,12 +164,12 @@ def evaluation(net, x_test, tr):
     x_test = x_test.to(device)
     net.eval()
     x_test_predictions = net(x_test)
-    print("Calculating MSE on test set...")
+    logging.info("Calculating MSE on test set...")
     mse_test = np.mean(np.power(x_test.cpu().data.numpy() - x_test_predictions.cpu().data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
-    print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+    logging.debug(f"{false_positives} false positives on dataset without attacks with size {test_size}")
 
 
 # %%
@@ -231,7 +235,7 @@ def main(argv):
     net = Net(input_dim).to(device)
 
     # %%
-    print(f"Training--------------------")
+    logging.debug(f"Training--------------------")
     training_data, input_dim, features = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
                                       [int(1 / 3 * len(training_data)),
@@ -251,13 +255,13 @@ def main(argv):
                 epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
-    print(tr)
+    logging.info(tr)
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(),
                tr=tr)
     # -----------------------------
-    print(f"Testing--------------------")
+    logging.info(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
                    scalar=scalar, x_trainer=x_trainer, x_tester=x_tester,
                    tr=tr, df_malicious=load_mal_data(), features=features)

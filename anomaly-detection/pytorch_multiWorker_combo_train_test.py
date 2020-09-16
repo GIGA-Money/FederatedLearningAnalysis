@@ -1,7 +1,7 @@
 # %%
 import os
 from glob import iglob
-
+import logging
 import lime
 import lime.lime_tabular
 import matplotlib.pyplot as plt
@@ -21,7 +21,6 @@ from syft.federated.floptimizer import Optims
 from tqdm import tqdm
 
 # %%
-
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
@@ -34,19 +33,25 @@ x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
 eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ["v_hook", "x_hook", "eval", "testing"]
+logging.basicConfig(
+    filename=f"figures/multiWorker/multiWorker_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+    level=logging.DEBUG,
+    format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
+
 if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
-    device1 = torch.device("cuda:1")
-    # device2 = torch.device("cuda:2")
-    print(f"Running on the GPU: {device0} and {device1}")
+device1 = torch.device("cuda:1")
+device2 = torch.device("cuda:2")
+logging.warning(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
 else:
-    device0 = torch.device("cpu")
-    device1 = torch.device("cpu")
-    # device2 = torch.device("cpu")
-    print(f"Running on the CPU: {device0}")
-
+device0 = torch.device("cpu")
+device1 = torch.device("cpu")
+device2 = torch.device("cpu")
+logging.warning(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or software wise?")
 
 # %%
+
+
 def load_mal_data():
     df_mirai = pd.concat((pd.read_csv(f) for f in iglob("../data/**/mirai_attacks/*.csv", recursive=True)),
                          ignore_index=True)
@@ -60,7 +65,7 @@ def load_mal_data():
 
 # %%
 def get_train_data(top_n_features=10):
-    print("Loading combined training data...")
+    logging.info("Loading combined training data...")
     df = pd.concat((
         pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
         ignore_index=True)
@@ -110,16 +115,16 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 net.get()
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-        print(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
+        logging.debug(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
     return np.mean(np.power(data.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
 # %%
 def cal_threshold(mse, input_dim):
-    print("mean is %.5f" % mse.mean())
-    print("min is %.5f" % mse.min())
-    print("max is %.5f" % mse.max())
-    print("std is %.5f" % mse.std())
+    logging.debug("mean is %.5f" % mse.mean())
+    logging.debug("min is %.5f" % mse.min())
+    logging.debug("max is %.5f" % mse.max())
+    logging.debug("std is %.5f" % mse.std())
     tr = mse.mean() + mse.std()
     with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
         t.write(str(tr))
@@ -136,13 +141,13 @@ def evaluation(net, x_test, tr):
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
-    print("Calculating MSE on test set...")
+    logging.info("Calculating MSE on test set...")
     mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
                        axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
-    print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+    logging.debug(f"{false_positives} false positives on dataset without attacks with size {test_size}")
 
 
 # %%
@@ -172,7 +177,7 @@ class Net(nn.Module):
 
 # %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
-    print(f"Calculated threshold is {tr}")
+    logging.debug(f"Calculated threshold is {tr}")
     model = AnomalyModel(net, tr, scalar)
     # %% pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
@@ -192,11 +197,11 @@ def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features,
 
 # %%
 def printing_press(Y_pred, Y_test):
-    print(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
-    print(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
-    print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
-    print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
-    print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    logging.debug(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    logging.debug(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
+    logging.debug(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    logging.debug(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
+    logging.debug(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Multi Worker Test",
@@ -284,13 +289,13 @@ def main(argv):
                 epochs=epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
-    print(tr)
+    logging.info(tr)
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(),
                tr=tr)
 
-    print(f"Testing--------------------")
+    logging.info(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
                    scalar=scalar, x_trainer=x_trainer, x_tester=x_tester,
                    tr=tr, df_malicious=load_mal_data(), features=features)
