@@ -131,7 +131,7 @@ def cal_threshold(mse, input_dim):
 def evaluation(net, x_test, tr):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-    #x_test = x_test.to(device1)
+    x_test = x_test.to(device1)
     x_test = x_test.send(eval_hook)
     net.eval()
     net.send(x_test.location)
@@ -260,7 +260,7 @@ def main(argv):
                              f"got: {argv}")
     # %%
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to(device0)
+    net = Net(input_dim).to('cpu')
     # %%
     training_data, input_dim, features = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(
