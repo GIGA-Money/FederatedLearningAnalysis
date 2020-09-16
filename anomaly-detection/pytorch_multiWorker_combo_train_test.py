@@ -88,7 +88,7 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_x = x_train[i:i + batch_size].to(device0)
+            batch_x = x_train[i:i + batch_size].to(device1)
             batch_y = x_opt[i:i + batch_size].to(device1)
             data_x = batch_x[::2]
             data_y = batch_x[1::2]
@@ -134,7 +134,7 @@ def evaluation(net, x_test, tr):
     x_test = x_test.to(device1)
     x_test = x_test.send(eval_hook)
     net.eval()
-    net.to(device0)
+    # net.to(device0)
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
@@ -232,7 +232,7 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
-        x = x.to(device0)
+        x = x.to(device1)
         x = x.send(tester_hook)
         self.model = self.model.get()
         x_pred = self.model(x)
@@ -261,7 +261,7 @@ def main(argv):
                              f"got: {argv}")
     # %%
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to(device0)
+    net = Net(input_dim).to(device1)
     # %%
     training_data, input_dim, features = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(
@@ -278,8 +278,8 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float(),
-                x_opt=torch.from_numpy(x_opt).float(),
+                x_train=torch.from_numpy(x_train).float().to(device1),
+                x_opt=torch.from_numpy(x_opt).float().to(device1),
                 batch_size=batch_size,
                 epochs=epochs,
                 learn_rate=learn_rate)
