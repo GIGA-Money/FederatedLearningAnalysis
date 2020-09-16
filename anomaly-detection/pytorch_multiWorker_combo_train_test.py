@@ -239,7 +239,7 @@ class AnomalyModel:
         x_pred = self.model(x)
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        mse = np.mean(np.power(x.cpu().data.numpy() - x_pred.cpu().data.numpy(), 2), axis=1)
+        mse = np.mean(np.power(x.get().cpu().data.numpy() - x_pred.get().cpu().data.numpy(), 2), axis=1)
         y_pred = mse > self.threshold
         return y_pred.astype(int)
 
