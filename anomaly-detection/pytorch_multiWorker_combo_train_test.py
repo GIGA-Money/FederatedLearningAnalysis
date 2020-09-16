@@ -40,14 +40,15 @@ logging.basicConfig(
 
 if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
-device1 = torch.device("cuda:1")
-device2 = torch.device("cuda:2")
-logging.warning(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
+    device1 = torch.device("cuda:1")
+    device2 = torch.device("cuda:2")
+    logging.warning(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
 else:
-device0 = torch.device("cpu")
-device1 = torch.device("cpu")
-device2 = torch.device("cpu")
-logging.warning(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or software wise?")
+    device0 = torch.device("cpu")
+    device1 = torch.device("cpu")
+    device2 = torch.device("cpu")
+    logging.warning(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or software wise?")
+
 
 # %%
 
