@@ -235,6 +235,7 @@ class AnomalyModel:
         x = x.to(device1)
         x = x.send(tester_hook)
         self.model = self.model.get()
+        self.model.send(x.location)
         x_pred = self.model(x)
         if torch.cuda.is_available():
             torch.cuda.synchronize()
