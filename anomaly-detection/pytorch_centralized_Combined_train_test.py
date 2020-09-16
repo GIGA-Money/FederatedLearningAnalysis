@@ -32,11 +32,6 @@ else:
     device = torch.device("cpu")
     logging.warning(f"Running on the CPU: {device}")
 
-logging.basicConfig(
-    filename=f"figures/centralized/centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
-    level=logging.DEBUG,
-    format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
-
 
 # %%
 def get_train_data(top_n_features=115):
@@ -229,7 +224,10 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
-
+    logging.basicConfig(
+        filename=f"figures/centralized/centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+        level=logging.DEBUG,
+        format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)

@@ -33,10 +33,6 @@ x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
 eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ["v_hook", "x_hook", "eval", "testing"]
-logging.basicConfig(
-    filename=f"figures/multiWorker/multiWorker_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
-    level=logging.DEBUG,
-    format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
 
 if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
@@ -265,6 +261,10 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
+    logging.basicConfig(
+        filename=f"figures/multiWorker/multiWorker_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+        level=logging.DEBUG,
+        format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device0)
