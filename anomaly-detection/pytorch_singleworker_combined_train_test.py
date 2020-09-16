@@ -118,6 +118,7 @@ def evaluation(net, x_test, tr):
     x_test = x_test.to(device)
     x_test = x_test.send(eval_hook)
     net.eval()
+    net.to(device)
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
@@ -247,7 +248,7 @@ def main(argv):
                              f"got: {argv}")
     #
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to('cpu')
+    net = Net(input_dim).to(device)
     # %%
     print(f"Training--------------------")
     training_data, input_dim, features = get_train_data(input_dim)
