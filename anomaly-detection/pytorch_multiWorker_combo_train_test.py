@@ -262,9 +262,10 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     logging.basicConfig(
-        filename=f"figures/multiWorker/multiWorker_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+        filename=f"figures/multiWorker/multiWorker_log.log",
         level=logging.DEBUG,
         format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
+    logging.critical(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device0)
