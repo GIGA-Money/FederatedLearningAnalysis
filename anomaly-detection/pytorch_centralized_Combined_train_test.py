@@ -225,7 +225,7 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
     logging.basicConfig(
-        filename=f"figures/centralized/centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+        filename=f"centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
         level=logging.DEBUG,
         format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
     # %%
