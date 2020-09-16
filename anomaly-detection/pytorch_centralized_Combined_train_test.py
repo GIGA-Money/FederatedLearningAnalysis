@@ -25,11 +25,11 @@ flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 if torch.cuda.is_available():
-    device = torch.device("cuda:1")
-    print("Running on the GPU")
+    device = torch.device("cuda:2")
+    print(f"Running on the GPU: {device}")
 else:
     device = torch.device("cpu")
-    print("Running on the CPU")
+    print(f"Running on the CPU: {device}")
 FLAGS = flags.FLAGS
 
 

@@ -38,12 +38,12 @@ if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
     device1 = torch.device("cuda:1")
     # device2 = torch.device("cuda:2")
-    print("Running on the GPU")
+    print(f"Running on the GPU: {device0} and {device1}")
 else:
     device0 = torch.device("cpu")
     device1 = torch.device("cpu")
     # device2 = torch.device("cpu")
-    print("Running on the CPU")
+    print(f"Running on the CPU: {device0}")
 
 
 # %%
