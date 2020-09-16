@@ -275,7 +275,7 @@ def main(argv):
     # print(tr)
     # %%
     evaluation(net,
-               torch.from_numpy(x_test).float().to(device),
+               torch.from_numpy(x_test).float(),
                tr=tr)
     # -----------------------------
     print(f"Testing--------------------")
