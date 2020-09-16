@@ -133,7 +133,6 @@ def evaluation(net, x_test, tr):
         torch.cuda.synchronize()
     x_test = x_test.to(device1)
     x_test = x_test.send(eval_hook)
-    net.get()
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
