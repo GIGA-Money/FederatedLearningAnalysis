@@ -32,17 +32,18 @@ hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v_hook")
 x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
 eval_hook = sy.VirtualWorker(hook=hook, id="eval")
+tester_hook = sy.VirtualWorker(hook=hook, id="testing")
+workers = ["v_hook", "x_hook", "eval", "testing"]
 if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
     device1 = torch.device("cuda:1")
-    #device2 = torch.device("cuda:2")
+    # device2 = torch.device("cuda:2")
     print("Running on the GPU")
 else:
     device0 = torch.device("cpu")
     device1 = torch.device("cpu")
-    #device2 = torch.device("cpu")
+    # device2 = torch.device("cpu")
     print("Running on the CPU")
-workers = ["v_hook", "x_hook", "eval"]
 
 
 # %%
@@ -114,6 +115,63 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
 
 
 # %%
+def cal_threshold(mse, input_dim):
+    print("mean is %.5f" % mse.mean())
+    print("min is %.5f" % mse.min())
+    print("max is %.5f" % mse.max())
+    print("std is %.5f" % mse.std())
+    tr = mse.mean() + mse.std()
+    with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
+        t.write(str(tr))
+    print(f"Calculated threshold is {tr}")
+    return tr
+
+
+# %%
+def evaluation(net, x_test, tr):
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    x_test = x_test.to(device1)
+    x_test = x_test.send(eval_hook)
+    net.get()
+    net.eval()
+    net.send(x_test.location)
+    x_test_predictions = net(x_test)
+    print("Calculating MSE on test set...")
+    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
+                       axis=1)
+    over_tr = mse_test > tr
+    false_positives = sum(over_tr)
+    test_size = mse_test.shape[0]
+    print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+
+
+# %%
+class Net(nn.Module):
+    def __init__(self, input_dim=10):
+        super().__init__()
+        self.fc1 = nn.Linear(input_dim, int(0.75 * input_dim))
+        self.fc2 = nn.Linear(int(0.75 * input_dim), int(0.5 * input_dim))
+        self.fc3 = nn.Linear(int(0.5 * input_dim), int(0.33 * input_dim))
+        self.fc4 = nn.Linear(int(0.33 * input_dim), int(0.25 * input_dim))
+        self.fc5 = nn.Linear(int(0.25 * input_dim), int(0.33 * input_dim))
+        self.fc6 = nn.Linear(int(0.33 * input_dim), int(0.5 * input_dim))
+        self.fc7 = nn.Linear(int(0.5 * input_dim), int(0.75 * input_dim))
+        self.fc8 = nn.Linear(int(0.75 * input_dim), input_dim)
+
+    def forward(self, x):
+        x = torch.tanh(self.fc1(x))
+        x = torch.tanh(self.fc2(x))
+        x = torch.tanh(self.fc3(x))
+        x = torch.tanh(self.fc4(x))
+        x = torch.tanh(self.fc5(x))
+        x = torch.tanh(self.fc6(x))
+        x = torch.tanh(self.fc7(x))
+        x = self.fc8(x)
+        return torch.softmax(x, dim=1)
+
+
+# %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
     print(f"Calculated threshold is {tr}")
     model = AnomalyModel(net, tr, scalar)
@@ -174,10 +232,12 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
+        x = x.to(device0)
+        x = x.send(tester_hook)
+        self.model = self.model.get()
+        x_pred = self.model(x)
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        x = x.to(device0)
-        x_pred = self.model(x)
         mse = np.mean(np.power(x.cpu().data.numpy() - x_pred.cpu().data.numpy(), 2), axis=1)
         y_pred = mse > self.threshold
         return y_pred.astype(int)
@@ -195,62 +255,6 @@ class AnomalyModel:
 
 
 # %%
-def cal_threshold(mse, input_dim):
-    print("mean is %.5f" % mse.mean())
-    print("min is %.5f" % mse.min())
-    print("max is %.5f" % mse.max())
-    print("std is %.5f" % mse.std())
-    tr = mse.mean() + mse.std()
-    with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
-        t.write(str(tr))
-    print(f"Calculated threshold is {tr}")
-    return tr
-
-
-# %%
-def evaluation(net, x_test, tr):
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
-    x_test = x_test.to(device1)
-    x_test = x_test.send('eval')
-    net.eval()
-    net.send(x_test.location)
-    x_test_predictions = net(x_test)
-    print("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
-                       axis=1)
-    over_tr = mse_test > tr
-    false_positives = sum(over_tr)
-    test_size = mse_test.shape[0]
-    print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
-
-
-# %%
-class Net(nn.Module):
-    def __init__(self, input_dim=10):
-        super().__init__()
-        self.fc1 = nn.Linear(input_dim, int(0.75 * input_dim))
-        self.fc2 = nn.Linear(int(0.75 * input_dim), int(0.5 * input_dim))
-        self.fc3 = nn.Linear(int(0.5 * input_dim), int(0.33 * input_dim))
-        self.fc4 = nn.Linear(int(0.33 * input_dim), int(0.25 * input_dim))
-        self.fc5 = nn.Linear(int(0.25 * input_dim), int(0.33 * input_dim))
-        self.fc6 = nn.Linear(int(0.33 * input_dim), int(0.5 * input_dim))
-        self.fc7 = nn.Linear(int(0.5 * input_dim), int(0.75 * input_dim))
-        self.fc8 = nn.Linear(int(0.75 * input_dim), input_dim)
-
-    def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = torch.tanh(self.fc3(x))
-        x = torch.tanh(self.fc4(x))
-        x = torch.tanh(self.fc5(x))
-        x = torch.tanh(self.fc6(x))
-        x = torch.tanh(self.fc7(x))
-        x = self.fc8(x)
-        return torch.softmax(x, dim=1)
-
-
-# %%
 def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
@@ -260,9 +264,10 @@ def main(argv):
     net = Net(input_dim).to(device0)
     # %%
     training_data, input_dim, features = get_train_data(input_dim)
-    x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
-                                      [int(1 / 3 * len(training_data)),
-                                       int(2 / 3 * len(training_data))])
+    x_train, x_opt, x_test = np.split(
+        training_data.sample(frac=1, random_state=1),
+        [int(1 / 3 * len(training_data)),
+         int(2 / 3 * len(training_data))])
     x_tester = x_test
     x_trainer = x_train
     # %%

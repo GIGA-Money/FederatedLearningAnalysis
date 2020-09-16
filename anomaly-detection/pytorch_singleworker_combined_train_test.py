@@ -26,7 +26,12 @@ flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
-
+FLAGS = flags.FLAGS
+hook = sy.TorchHook(torch)
+v_hook = sy.VirtualWorker(hook=hook, id="v")
+eval_hook = sy.VirtualWorker(hook=hook, id="eval")
+tester_hook = sy.VirtualWorker(hook=hook, id="testing")
+workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
     device = torch.device("cuda:1")
     print("Running on the GPU")
@@ -34,19 +39,13 @@ else:
     device = torch.device("cpu")
     print("Running on the CPU")
 
-FLAGS = flags.FLAGS
-hook = sy.TorchHook(torch)
-v_hook = sy.VirtualWorker(hook=hook, id="v")
-eval_hook = sy.VirtualWorker(hook=hook, id="eval")
-tester_hook = sy.VirtualWorker(hook=hook, id="testing")
-workers = ['v', 'eval', 'testing']
-
 
 # %%
 def get_train_data(top_n_features=10):
     print("Loading combined training data...")
-    df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
-                   ignore_index=True)
+    df = pd.concat((
+        pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
+        ignore_index=True)
     fisher = pd.read_csv("../fisher.csv")
     features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
@@ -117,7 +116,7 @@ def evaluation(net, x_test, tr):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     x_test = x_test.to(device)
-    x_test = x_test.send('eval')
+    x_test = x_test.send(eval_hook)
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
@@ -218,7 +217,7 @@ class AnomalyModel:
 
     def predict(self, x):
         x = x.to(device)
-        x = x.send('testing')
+        x = x.send(tester_hook)
         self.model = self.model.get()
         self.model.send(x.location)
         x_pred = self.model(x)
@@ -275,7 +274,8 @@ def main(argv):
     # print(tr)
     # %%
     evaluation(net,
-               torch.from_numpy(x_test).float(), tr=tr)
+               torch.from_numpy(x_test).float(),
+               tr=tr)
     # -----------------------------
     print(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
