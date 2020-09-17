@@ -39,6 +39,7 @@ else:
     device = torch.device("cpu")
     logging.warning(f"Running on the CPU: {device}")
 
+
 # %%
 def get_train_data(top_n_features=10):
     logging.info("Loading combined training data...")
@@ -161,7 +162,7 @@ def printing_press(Y_pred, Y_test):
                                         title="single worker Test",
                                         text_fontsize="large")
     plt.savefig(
-        f"figures/singleWorker/confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
+        f"figures/singleWorker/Single_worker_confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 
 
 # %%
@@ -245,7 +246,7 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     logging.basicConfig(
-        filename="singleWorker_log.log",
+        filename="./figures/singleWorker/singleWorker_log.txt",
         level=logging.INFO)
     logging.info(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
