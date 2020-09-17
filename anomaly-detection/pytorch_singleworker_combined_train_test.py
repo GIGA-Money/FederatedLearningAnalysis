@@ -7,6 +7,7 @@ import lime.lime_tabular
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib
 import scikitplot as skplt
 import syft as sy
 import torch
@@ -245,6 +246,7 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
+    matplotlib.use("pdf")
     logging.basicConfig(
         filename="./figures/singleWorker/singleWorker_log.txt",
         level=logging.INFO)
