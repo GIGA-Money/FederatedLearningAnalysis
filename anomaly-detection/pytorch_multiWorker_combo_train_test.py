@@ -263,7 +263,7 @@ def main(argv):
                              f"got: {argv}")
     logging.basicConfig(
         filename=f"figures/multiWorker/multiWorker_log.txt",
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(funcName)s")
     logging.debug(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
