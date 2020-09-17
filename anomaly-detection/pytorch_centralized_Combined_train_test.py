@@ -35,7 +35,7 @@ else:
 
 # %%
 def get_train_data(top_n_features=115):
-    logging.debug("Loading combined training data...")
+    logging.info("Loading combined training data...")
     df = pd.concat((
         pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
         ignore_index=True)
@@ -79,11 +79,11 @@ def load_mal_data():
 
 # %%
 def printing_press(Y_pred, Y_test):
-    logging.debug(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
-    logging.debug(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
-    logging.debug(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
-    logging.debug(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
-    logging.debug(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    logging.info(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    logging.info(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
+    logging.info(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    logging.info(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
+    logging.info(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Centralized Test",
@@ -135,20 +135,20 @@ def train(net, x_train, batch_size, epochs, learn_rate):
             train_loss = loss_function(outputs, batch_x)
             train_loss.backward()
             optimizer.step()
-        logging.debug(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
+        logging.info(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
     return np.mean(np.power(batch_x.cpu().data.numpy().real - outputs.cpu().data.numpy(), 2), axis=1)
 
 
 # %%
 def cal_threshold(mse, input_dim):
-    logging.debug(f"mean is {mse.mean():.5f}")
-    logging.debug(f"min is {mse.min():.5f}")
-    logging.debug(f"max is {mse.max():.5f}")
-    logging.debug(f"std is {mse.std():.5f}")
+    logging.info(f"mean is {mse.mean():.5f}")
+    logging.info(f"min is {mse.min():.5f}")
+    logging.info(f"max is {mse.max():.5f}")
+    logging.info(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
     # with open(f"threshold_centralized/threshold_centralized_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
     #    t.write(str(tr))
-    logging.debug(f"Calculated threshold is {tr:.5f}")
+    logging.info(f"Calculated threshold is {tr:.5f}")
     return tr
 
 
@@ -164,7 +164,7 @@ def evaluation(net, x_test, tr):
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
-    logging.debug(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+    logging.info(f"{false_positives} false positives on dataset without attacks with size {test_size}")
 
 
 # %%
@@ -225,16 +225,15 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
     logging.basicConfig(
-        filename=f"figures/centralized/centralized_log.txt",
-        level=logging.INFO,
-        format="%(funcName)s")
-    logging.debug(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+        filename="entralized_log.log",
+        level=logging.INFO)
+    logging.info(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)
 
     # %%
-    logging.debug(f"Training--------------------")
+    logging.info(f"Training--------------------")
     training_data, input_dim, features = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
                                       [int(1 / 3 * len(training_data)),
