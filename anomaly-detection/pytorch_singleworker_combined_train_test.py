@@ -34,7 +34,7 @@ tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
     device = torch.device("cuda:1")
-    logging.warning(f"Running on the GPU: {device}")
+    logging.debug(f"Running on the GPU: {device}")
 else:
     device = torch.device("cpu")
     logging.warning(f"Running on the CPU: {device}")
@@ -104,9 +104,9 @@ def cal_threshold(mse, input_dim):
     logging.debug(f"max is {mse.max():.5f}")
     logging.debug(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
-    with open(f"threshold_singleworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
-        t.write(str(tr))
-    logging.info(f"Calculated threshold is {tr:.5f}")
+    # with open(f"threshold_singleworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
+    #   t.write(str(tr))
+    logging.debug(f"Calculated threshold is {tr:.5f}")
     return tr
 
 
@@ -117,7 +117,6 @@ def evaluation(net, x_test, tr):
     x_test = x_test.to(device)
     x_test = x_test.send(eval_hook)
     net.eval()
-    # net.to(device)
     net.send(x_test.location)
     x_test_predictions = net(x_test)
     logging.info("Calculating MSE on test set...")
@@ -246,10 +245,10 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     logging.basicConfig(
-        filename=f"figures/singleWorkerWorker/singleWorker_log.log",
+        filename=f"figures/singleWorkerWorker/singleWorker_log.txt",
         level=logging.DEBUG,
-        format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
-    logging.critical(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+        format="%(funcName)s")
+    logging.debug(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)

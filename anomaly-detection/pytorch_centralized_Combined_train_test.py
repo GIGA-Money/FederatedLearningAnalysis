@@ -146,8 +146,8 @@ def cal_threshold(mse, input_dim):
     logging.debug(f"max is {mse.max():.5f}")
     logging.debug(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
-    with open(f"threshold_centralized/threshold_centralized_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
-        t.write(str(tr))
+    # with open(f"threshold_centralized/threshold_centralized_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
+    #    t.write(str(tr))
     logging.debug(f"Calculated threshold is {tr:.5f}")
     return tr
 
@@ -225,10 +225,10 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
     logging.basicConfig(
-        filename=f"figures/centralized/centralized_log.log",
+        filename=f"figures/centralized/centralized_log.txt",
         level=logging.DEBUG,
-        format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
-    logging.critical(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+        format="%(funcName)s")
+    logging.debug(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)

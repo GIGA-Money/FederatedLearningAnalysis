@@ -38,7 +38,7 @@ if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
     device1 = torch.device("cuda:1")
     device2 = torch.device("cuda:2")
-    logging.warning(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
+    logging.debug(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
 else:
     device0 = torch.device("cpu")
     device1 = torch.device("cpu")
@@ -123,9 +123,9 @@ def cal_threshold(mse, input_dim):
     logging.debug("max is %.5f" % mse.max())
     logging.debug("std is %.5f" % mse.std())
     tr = mse.mean() + mse.std()
-    with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
-        t.write(str(tr))
-    print(f"Calculated threshold is {tr}")
+    # with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
+    #    t.write(str(tr))
+    logging.debug(f"Calculated threshold is {tr}")
     return tr
 
 
@@ -262,10 +262,10 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     logging.basicConfig(
-        filename=f"figures/multiWorker/multiWorker_log.log",
+        filename=f"figures/multiWorker/multiWorker_log.txt",
         level=logging.DEBUG,
-        format="%(funcName)s:%(lineno)d:%(module)s:%(process)d:%(thread)d")
-    logging.critical(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+        format="%(funcName)s")
+    logging.debug(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device0)
