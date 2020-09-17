@@ -7,6 +7,7 @@ import lime.lime_tabular
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib
 import scikitplot as skplt
 import torch
 import torch.nn as nn
@@ -224,6 +225,7 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
+    matplotlib.use("pdf")
     logging.basicConfig(
         filename="entralized_log.log",
         level=logging.INFO)
