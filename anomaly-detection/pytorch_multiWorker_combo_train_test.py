@@ -1,13 +1,14 @@
 # %%
+import logging
 import os
 from glob import iglob
-import logging
+
 import lime
 import lime.lime_tabular
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib
 import scikitplot as skplt
 import syft as sy
 import torch
@@ -20,13 +21,15 @@ from sklearn.metrics import recall_score, accuracy_score, precision_score, \
 from sklearn.preprocessing import StandardScaler
 from syft.federated.floptimizer import Optims
 from tqdm import tqdm
+from comet_ml import Experiment
 
 # %%
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
-flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
+flags.DEFINE_string("Current_dir", os.getcwd(),
+                    "the current working directory, this will not put you in the anomaly detection dir")
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v_hook")
@@ -34,6 +37,7 @@ x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
 eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ["v_hook", "x_hook", "eval", "testing"]
+experiment = Experiment(project_name="multiWorker_Train_Testing")
 
 if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
@@ -170,7 +174,12 @@ class Net(nn.Module):
         x = torch.tanh(self.fc6(x))
         x = torch.tanh(self.fc7(x))
         x = self.fc8(x)
-        return torch.softmax(x, dim=1)
+        return x
+        # removed  return torch.softmax(x, dim=1), as the original code
+        # (even though it says it used softmax during classification, not detection),
+        # did not use softmax on the exit of the training, so just returning 'x'
+        # this should be tested however, to ensure
+
 
 
 # %%
@@ -262,10 +271,11 @@ def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
+
     matplotlib.use("pdf")
-    logging.basicConfig(
-        filename="multiWorker_log.log",
-        level=logging.INFO)
+    # logging.basicConfig(
+    #    filename=f"figures/multiWorker/multiWorker_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+    #    level=logging.INFO)
     logging.info(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim

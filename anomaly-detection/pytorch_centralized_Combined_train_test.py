@@ -18,25 +18,29 @@ from sklearn.metrics import recall_score, accuracy_score, precision_score, \
     confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
+from comet_ml import Experiment
 
 # %%
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
-flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
+flags.DEFINE_string("Current_dir", os.getcwd(),
+                    "the current working directory, this will not put you in the anomaly detection dir")
 FLAGS = flags.FLAGS
+experiment = Experiment(project_name="Centralized_Train_Testing")
+
 if torch.cuda.is_available():
     device = torch.device("cuda:2")
-    logging.warning(f"Running on the GPU: {device}")
+    experiment.log_system_info("Running on the GPU:", device)
 else:
     device = torch.device("cpu")
-    logging.warning(f"Running on the CPU: {device}")
+    experiment.log_system_info("Running on the CPU:", device)
 
 
 # %%
 def get_train_data(top_n_features=115):
-    logging.info("Loading combined training data...")
+    print("Loading combined training data...")
     df = pd.concat((
         pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
         ignore_index=True)
@@ -48,7 +52,7 @@ def get_train_data(top_n_features=115):
 
 # %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
-    logging.info(f"Calculated threshold is {tr}")
+    experiment.log_text(f"Calculated threshold is {tr}")
     model = AnomalyModel(net, tr, scalar)
     # %% pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
@@ -80,7 +84,7 @@ def load_mal_data():
 
 # %%
 def printing_press(Y_pred, Y_test):
-    logging.info(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    experiment.log_metric("accuracy", accuracy_score(Y_test, Y_pred))
     logging.info(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
     logging.info(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
     logging.info(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
@@ -190,8 +194,10 @@ class Net(nn.Module):
         x = torch.tanh(self.fc6(x))
         x = torch.tanh(self.fc7(x))
         x = self.fc8(x)
-        return torch.softmax(x, dim=1)
-
+        return x
+        # removed  return torch.softmax(x, dim=1), as the original code
+        # (even though it says it used softmax during classification, not detection),
+        # did not use softmax on the exit of the training, so just returning 'x'
 
 # %%
 class AnomalyModel:
@@ -227,7 +233,7 @@ def main(argv):
                              f"got: {argv}.")
     matplotlib.use("pdf")
     logging.basicConfig(
-        filename="entralized_log.log",
+        filename=f"figures/centerlized/centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
         level=logging.INFO)
     logging.info(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
