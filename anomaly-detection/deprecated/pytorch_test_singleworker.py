@@ -73,7 +73,7 @@ def test_with_data(top_n_features, df_malicious, PATH):
     saved_model = load_model(PATH, top_n_features)
     # %% opening threshold
     with open(FLAGS.Current_dir +
-              f"threshold_centralized/threshold_centralized_{top_n_features}_{FLAGS.Learn_rate}.txt") as t:
+              f"threshold_singleworker/threshold_federated_{top_n_features}_{FLAGS.Learn_rate}.txt") as t:
         tr = np.float64(t.read())
     print(f"Calculated threshold is {tr}")
     model = AnomalyModel(saved_model, tr, scaler)
@@ -101,10 +101,10 @@ def lime_writing(X_test, Y_test, df, model, x_train):
         print(f"Explaining for record nr {i}")
         explainer = lime.lime_tabular.LimeTabularExplainer(
             x_train.values,
-            feature_names=df.drop(columns=['malicious']).columns.tolist(),
+            feature_names=df.drop(columns=["malicious"]).columns.tolist(),
             discretize_continuous=True)
         exp = explainer.explain_instance(X_test[i], model.scale_predict_classes)
-        exp.save_to_file(f"lime_centralized/explanation{j}.html")
+        exp.save_to_file(f"lime_singleworker/explanation{j}.html")
         print(exp.as_list())
         print("Actual class")
         print(Y_test.iloc[[i]])
@@ -120,7 +120,7 @@ def printing_press(Y_pred, Y_test):
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
-                                        title="Centralized Test",
+                                        title="single worker Test",
                                         text_fontsize="large")
     plt.show()
 
@@ -140,8 +140,8 @@ def testing(top_n_features):
     print("Testing")
     df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv",
                                                   recursive=True)), ignore_index=True)
-    fisher = pd.read_csv("../fisher.csv")
-    features = fisher.iloc[0:int(top_n_features)]['Feature'].values
+    fisher = pd.read_csv("../../fisher.csv")
+    features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
     x_train, x_opt, x_test = np.split(df.sample(frac=1, random_state=17), [int(1 / 3 * len(df)), int(2 / 3 * len(df))])
     scaler = StandardScaler()
@@ -187,13 +187,12 @@ def main(argv):
                              f"got: {argv}.")
     top_n_features = FLAGS.Input_dim
     learn_rate = FLAGS.Learn_rate
-
     tr = " "
-    tr_file = FLAGS.Current_dir + f"threshold_centralized/threshold_centralized_{top_n_features}_{learn_rate}.txt"
+    tr_file = FLAGS.Current_dir + f"threshold_singleworker/threshold_federated_{top_n_features}_{learn_rate}.txt"
     with open(tr_file) as file:
         tr = file.read()
     tr = tr[:5]
-    PATH = FLAGS.Current_dir + f"PyModels/centralizedModel/centralized_base_{tr}.pt"
+    PATH = FLAGS.Current_dir + f"PyModels/singleModel/single_worker_{tr}.pt"
     test_with_data(top_n_features, load_mal_data(), PATH)
     os._exit(0)
 

@@ -1,14 +1,16 @@
 # %%
+import logging
 import os
 from glob import iglob
-import logging
+from comet_ml import Experiment
 import lime
 import lime.lime_tabular
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib
 import scikitplot as skplt
+import syft as sy
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -17,8 +19,8 @@ from absl import flags
 from sklearn.metrics import recall_score, accuracy_score, precision_score, \
     confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler
+from syft.federated.floptimizer import Optims
 from tqdm import tqdm
-from comet_ml import Experiment
 
 # %%
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
@@ -28,46 +30,29 @@ flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting t
 flags.DEFINE_string("Current_dir", os.getcwd(),
                     "the current working directory, this will not put you in the anomaly detection dir")
 FLAGS = flags.FLAGS
-experiment = Experiment(project_name="Centralized_Train_Testing")
-
+hook = sy.TorchHook(torch)
+v_hook = sy.VirtualWorker(hook=hook, id="v")
+eval_hook = sy.VirtualWorker(hook=hook, id="eval")
+tester_hook = sy.VirtualWorker(hook=hook, id="testing")
+workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
-    device = torch.device("cuda:2")
-    experiment.log_system_info("Running on the GPU:", device)
+    device = torch.device("cuda:1")
+    logging.info(f"Running on the GPU: {device}")
 else:
     device = torch.device("cpu")
-    experiment.log_system_info("Running on the CPU:", device)
+    logging.warning(f"Running on the CPU: {device}")
 
 
 # %%
-def get_train_data(top_n_features=115):
-    print("Loading combined training data...")
+def get_train_data(top_n_features=10):
+    logging.info("Loading combined training data...")
     df = pd.concat((
-        pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
+        pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
         ignore_index=True)
-    fisher = pd.read_csv('../fisher.csv')
-    features = fisher.iloc[0:int(top_n_features)]['Feature'].values
+    fisher = pd.read_csv("../fisher.csv")
+    features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
     return df, top_n_features, features
-
-
-# %%
-def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
-    experiment.log_text(f"Calculated threshold is {tr}")
-    model = AnomalyModel(net, tr, scalar)
-    # %% pandas data grabbing
-    df_benign = pd.DataFrame(x_tester, columns=df.columns)
-    df_benign["malicious"] = 0
-    df_malicious = df_malicious.sample(n=df_benign.shape[0], random_state=17)[list(features)]
-    df_malicious["malicious"] = 1
-    df = df_benign.append(df_malicious)
-    X_test = df.drop(columns=["malicious"]).values
-    X_test_scaled = scalar.transform(X_test)
-    Y_test = df["malicious"]
-    Y_pred = model.predict(torch.from_numpy(X_test_scaled).float())
-    # %% printing to console
-    printing_press(Y_pred, Y_test)
-    # %% writing to lime html files
-    # lime_writing(X_test, Y_test, df, model, x_trainer)
 
 
 # %%
@@ -83,39 +68,6 @@ def load_mal_data():
 
 
 # %%
-def printing_press(Y_pred, Y_test):
-    experiment.log_metric("accuracy", accuracy_score(Y_test, Y_pred))
-    logging.info(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
-    logging.info(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
-    logging.info(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
-    logging.info(f"classification report:\n {classification_report(Y_test, Y_pred)}")
-    skplt.metrics.plot_confusion_matrix(Y_test,
-                                        Y_pred,
-                                        title="Centralized Test",
-                                        text_fontsize="large")
-    plt.savefig(
-        f"figures/centralized/confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
-
-
-# %%
-def lime_writing(X_test, Y_test, df, model, x_train):
-    print("explaining with LIME\n---------------------------------")
-    for j in range(5):
-        i = np.random.randint(0, X_test.shape[0])
-        print(f"Explaining for record nr {i}")
-        explainer = lime.lime_tabular.LimeTabularExplainer(
-            x_train.values,
-            feature_names=df.drop(columns=['malicious']).columns.tolist(),
-            discretize_continuous=True)
-        exp = explainer.explain_instance(X_test[i], model.scale_predict_classes)
-        exp.save_to_file(f"lime_centralized/explanation{j}.html")
-        print(exp.as_list())
-        print("Actual class")
-        print(Y_test.iloc[[i]])
-    print("---------------------------------")
-
-
-# %%
 def create_scalar(x_opt, x_test, x_train):
     scalar = StandardScaler()
     scalar.fit(x_train.append(x_opt))
@@ -127,21 +79,26 @@ def create_scalar(x_opt, x_test, x_train):
 
 # %%
 def train(net, x_train, batch_size, epochs, learn_rate):
-    outputs = 0
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
-    batch_x = 0
-    train_loss = 0
+    loss, batch_x, outputs = 0, 0, 0
+    optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
             batch_x = x_train[i:i + batch_size].to(device)
-            net.zero_grad()
+            batch_x = batch_x.send('v')
+            net.send(batch_x.location)
+            opt = optims.get_optim(batch_x.location.id)
+            opt.zero_grad()
             outputs = net(batch_x)
-            train_loss = loss_function(outputs, batch_x)
-            train_loss.backward()
-            optimizer.step()
-        logging.info(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
-    return np.mean(np.power(batch_x.cpu().data.numpy().real - outputs.cpu().data.numpy(), 2), axis=1)
+            loss = loss_function(outputs, batch_x)
+            loss.backward()
+            opt.step()
+            net.get()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+        logging.info(f"Epoch: {epoch}. Loss: {loss.get()}")
+    return np.mean(np.power(batch_x.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
 # %%
@@ -151,8 +108,8 @@ def cal_threshold(mse, input_dim):
     logging.info(f"max is {mse.max():.5f}")
     logging.info(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
-    # with open(f"threshold_centralized/threshold_centralized_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
-    #    t.write(str(tr))
+    # with open(f"threshold_singleworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
+    #   t.write(str(tr))
     logging.info(f"Calculated threshold is {tr:.5f}")
     return tr
 
@@ -162,14 +119,71 @@ def evaluation(net, x_test, tr):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     x_test = x_test.to(device)
+    x_test = x_test.send(eval_hook)
     net.eval()
+    net.send(x_test.location)
     x_test_predictions = net(x_test)
     logging.info("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(x_test.cpu().data.numpy() - x_test_predictions.cpu().data.numpy(), 2), axis=1)
+    mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
+                       axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
     logging.info(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+
+
+# %%
+def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
+    logging.info(f"Calculated threshold is {tr} for testing with data")
+    model = AnomalyModel(net, tr, scalar)
+    #   pandas data grabbing
+    df_benign = pd.DataFrame(x_tester, columns=df.columns)
+    df_benign["malicious"] = 0
+    df_malicious = df_malicious.sample(n=df_benign.shape[0], random_state=17)[list(features)]
+    df_malicious["malicious"] = 1
+    df = df_benign.append(df_malicious)
+    X_test = df.drop(columns=["malicious"]).values
+    X_test_scaled = scalar.transform(X_test)
+    Y_test = df["malicious"]
+
+    Y_pred = model.predict(torch.from_numpy(X_test_scaled).float())
+    #   printing to console
+    printing_press(Y_pred, Y_test)
+    #  writing to lime html files
+    # lime_writing(X_test, Y_test, df, model, x_trainer)
+
+
+# %%
+def printing_press(Y_pred, Y_test):
+    logging.info(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    logging.info(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
+    logging.info(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    logging.info(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
+    logging.info(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    skplt.metrics.plot_confusion_matrix(Y_test,
+                                        Y_pred,
+                                        title="single worker Test",
+                                        text_fontsize="large")
+    plt.savefig(
+        f"figures/singleWorker/Single_worker_confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
+
+
+# %%
+def lime_writing(X_test, Y_test, df, model, x_train):
+    print("explaining with LIME\n---------------------------------")
+    for j in range(5):
+        i = np.random.randint(0, X_test.shape[0])
+        print(f"Explaining for record nr {i}")
+        explainer = lime.lime_tabular.LimeTabularExplainer(
+            x_train.values,
+            feature_names=df.drop(columns=["malicious"]).columns.tolist(),
+            discretize_continuous=True)
+        exp = explainer.explain_instance(X_test[i], model.scale_predict_classes)
+        exp.save_to_file(f"lime_singleworker/explanation{j}.html")
+        print(exp.as_list())
+        print("Actual class")
+        print(Y_test.iloc[[i]])
+    print("---------------------------------")
 
 
 # %%
@@ -199,6 +213,7 @@ class Net(nn.Module):
         # (even though it says it used softmax during classification, not detection),
         # did not use softmax on the exit of the training, so just returning 'x'
 
+
 # %%
 class AnomalyModel:
     def __init__(self, model, threshold, scaler):
@@ -207,11 +222,14 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
+        x = x.to(device)
+        x = x.send(tester_hook)
+        self.model = self.model.get()
+        self.model.send(x.location)
+        x_pred = self.model(x)
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        x = x.to(device)
-        x_pred = self.model(x)
-        mse = np.mean(np.power(x.cpu().data.numpy() - x_pred.cpu().data.numpy(), 2), axis=1)
+        mse = np.mean(np.power(x.get().cpu().data.numpy() - x_pred.get().cpu().data.numpy(), 2), axis=1)
         y_pred = mse > self.threshold
         return y_pred.astype(int)
 
@@ -227,25 +245,29 @@ class AnomalyModel:
         return np.array(classes_arr)
 
 
+# %%
+
 def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
-                             f"got: {argv}.")
+                             f"got: {argv}")
+
     matplotlib.use("pdf")
     logging.basicConfig(
-        filename=f"figures/centerlized/centralized_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
+        filename=f"figures/singleWorker/singleWorker_log_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.log",
         level=logging.INFO)
     logging.info(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)
-
     # %%
     logging.info(f"Training--------------------")
     training_data, input_dim, features = get_train_data(input_dim)
-    x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
-                                      [int(1 / 3 * len(training_data)),
-                                       int(2 / 3 * len(training_data))])
+    x_train, x_opt, x_test = np.split(
+        training_data.sample(frac=1, random_state=1),
+        [int(1 / 3 * len(training_data)),
+         int(2 / 3 * len(training_data))])
+    #
     x_tester = x_test
     x_trainer = x_train
     # %%
@@ -255,10 +277,10 @@ def main(argv):
     epochs = FLAGS.Epochs
     learn_rate = FLAGS.Learn_rate
     # %%
-    mse = train(net,
-                torch.from_numpy(x_train).float(),
-                batch_size,
-                epochs,
+    mse = train(net=net,
+                x_train=torch.from_numpy(x_train).float().to(device),
+                batch_size=batch_size,
+                epochs=epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
     logging.info(tr)

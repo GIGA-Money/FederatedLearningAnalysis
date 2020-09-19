@@ -20,12 +20,14 @@ flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting t
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
 FLAGS = flags.FLAGS
-if torch.cuda.is_available():
-    device = torch.device("cuda:1")
-    print("Running on the GPU")
-else:
-    device = torch.device("cpu")
-    print("Running on the CPU")
+
+
+# if torch.cuda.is_available():
+#    device = torch.device("cuda:1")
+#    print("Running on the GPU")
+# else:
+#    device = torch.device("cpu")
+#    print("Running on the CPU")
 
 
 # %%
@@ -73,7 +75,7 @@ def test_with_data(top_n_features, df_malicious, PATH):
     saved_model = load_model(PATH, top_n_features)
     # %% opening threshold
     with open(FLAGS.Current_dir +
-              f"threshold_singleworker/threshold_federated_{top_n_features}_{FLAGS.Learn_rate}.txt") as t:
+              f"threshold_multiworker/threshold_federated_{top_n_features}_{FLAGS.Learn_rate}.txt") as t:
         tr = np.float64(t.read())
     print(f"Calculated threshold is {tr}")
     model = AnomalyModel(saved_model, tr, scaler)
@@ -104,7 +106,7 @@ def lime_writing(X_test, Y_test, df, model, x_train):
             feature_names=df.drop(columns=["malicious"]).columns.tolist(),
             discretize_continuous=True)
         exp = explainer.explain_instance(X_test[i], model.scale_predict_classes)
-        exp.save_to_file(f"lime_singleworker/explanation{j}.html")
+        exp.save_to_file(f"lime_multiworker/explanation{j}.html")
         print(exp.as_list())
         print("Actual class")
         print(Y_test.iloc[[i]])
@@ -120,7 +122,7 @@ def printing_press(Y_pred, Y_test):
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
-                                        title="single worker Test",
+                                        title="Centralized Test",
                                         text_fontsize="large")
     plt.show()
 
@@ -128,9 +130,16 @@ def printing_press(Y_pred, Y_test):
 # %%
 def load_model(PATH, top_n_features):
     print(f"Loading model")
+    pretrained_dict = torch.load(PATH)
     saved_model = Net(top_n_features)
-    saved_model.load_state_dict(torch.load(PATH))
-    saved_model.to(device)
+    model_dict = saved_model.state_dict()
+
+    pretrained_dict = {k: v for k,
+                                v in pretrained_dict.items()
+                       if k in model_dict}
+    model_dict.update(pretrained_dict)
+    saved_model.load_state_dict(model_dict, strict=False)
+
     saved_model.eval()
     return saved_model
 
@@ -140,8 +149,8 @@ def testing(top_n_features):
     print("Testing")
     df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv",
                                                   recursive=True)), ignore_index=True)
-    fisher = pd.read_csv("../fisher.csv")
-    features = fisher.iloc[0:int(top_n_features)]["Feature"].values
+    fisher = pd.read_csv("../../fisher.csv")
+    features = fisher.iloc[0:int(top_n_features)]['Feature'].values
     df = df[list(features)]
     x_train, x_opt, x_test = np.split(df.sample(frac=1, random_state=17), [int(1 / 3 * len(df)), int(2 / 3 * len(df))])
     scaler = StandardScaler()
@@ -150,9 +159,9 @@ def testing(top_n_features):
 
 
 # %% *UNUSED*
-def get_one_hot(targets, nb_classes):
-    res = np.eye(nb_classes)[np.array(targets).reshape(-1)]
-    return res.reshape(list(targets.shape) + [nb_classes])
+# def get_one_hot(targets, nb_classes):
+#    res = np.eye(nb_classes)[np.array(targets).reshape(-1)]
+#    return res.reshape(list(targets.shape) + [nb_classes])
 
 
 # %%
@@ -188,11 +197,11 @@ def main(argv):
     top_n_features = FLAGS.Input_dim
     learn_rate = FLAGS.Learn_rate
     tr = " "
-    tr_file = FLAGS.Current_dir + f"threshold_singleworker/threshold_federated_{top_n_features}_{learn_rate}.txt"
+    tr_file = FLAGS.Current_dir + f"threshold_multiworker/threshold_federated_{top_n_features}_{learn_rate}.txt"
     with open(tr_file) as file:
         tr = file.read()
     tr = tr[:5]
-    PATH = FLAGS.Current_dir + f"PyModels/singleModel/single_worker_{tr}.pt"
+    PATH = FLAGS.Current_dir + f"PyModels/multiModel/multiworker_base_{tr}.pt"
     test_with_data(top_n_features, load_mal_data(), PATH)
     os._exit(0)
 

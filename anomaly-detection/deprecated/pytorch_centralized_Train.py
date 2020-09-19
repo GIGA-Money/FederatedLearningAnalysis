@@ -3,38 +3,39 @@ import os
 from glob import iglob
 import numpy as np
 import pandas as pd
-import syft as sy
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from absl import app
 from absl import flags
 from sklearn.preprocessing import StandardScaler
-from syft.federated.floptimizer import Optims
 from tqdm import tqdm
 
 # %%
-
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
-flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
+flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 FLAGS = flags.FLAGS
-hook = sy.TorchHook(torch)
-v_hook = sy.VirtualWorker(hook=hook, id="v_hook")
-x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
 
-workers = ["v_hook", "x_hook"]
+# %%
+if torch.cuda.is_available():
+    device = torch.device("cuda:1")
+    print("Running on the GPU")
+else:
+    device = torch.device("cpu")
+    print("Running on the CPU")
 
 
 # %%
-def get_train_data(top_n_features=10):
+def get_train_data(top_n_features=115):
     print("Loading combined training data...")
-    df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
-                   ignore_index=True)
-    fisher = pd.read_csv("../fisher.csv")
-    features = fisher.iloc[0:int(top_n_features)]["Feature"].values
+    df = pd.concat((
+        pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
+        ignore_index=True)
+    fisher = pd.read_csv('../../fisher.csv')
+    features = fisher.iloc[0:int(top_n_features)]['Feature'].values
     df = df[list(features)]
     return df, top_n_features
 
@@ -50,60 +51,45 @@ def create_scalar(x_opt, x_test, x_train):
 
 
 # %%
-def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
+def train(net, x_train, batch_size, epochs, learn_rate):
+    outputs = 0
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
-    batch_x, batch_y, data, outputs, loss = 0, 0, 0, 0, 0
-    optims = Optims(workers, optim=optimizer)
+    batch_x = 0
+    train_loss = 0
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
             batch_x = x_train[i:i + batch_size]
-            batch_y = x_opt[i:i + batch_size]
-            data_x = batch_x[::2]
-            data_y = batch_x[1::2]
-            target_x = batch_y[::2]
-            target_y = batch_y[1::2]
-            data_y = data_y.send(x_hook)
-            data_x = data_x.send(v_hook)
-            target_x = target_x.send(v_hook)
-            target_y = target_y.send(x_hook)
-            datasets = [(data_x, target_x), (data_y, target_y)]
-            for data, target in datasets:
-                net.send(data.location)
-                opt = optims.get_optim(data.location.id)
-                opt.zero_grad()
-                outputs = net(data)
-                loss = loss_function(outputs, data)
-                loss.backward()
-                opt.step()
-                net.get()
-        print(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
-    return np.mean(np.power(data.get().data.numpy() - outputs.get().data.numpy(), 2), axis=1)
+            batch_x = batch_x.to(device)
+            net.zero_grad()
+            outputs = net(batch_x)
+            train_loss = loss_function(outputs, batch_x)
+            train_loss.backward()
+            optimizer.step()
+        print(f"Epoch: {epoch}. Train_Loss: {train_loss.item():.5f}.")
+
+    return np.mean(np.power(batch_x.data.numpy().real - outputs.data.numpy(), 2), axis=1)
 
 
 # %%
 def cal_threshold(mse, input_dim):
-    print("mean is %.5f" % mse.mean())
-    print("min is %.5f" % mse.min())
-    print("max is %.5f" % mse.max())
-    print("std is %.5f" % mse.std())
-
+    print(f"mean is {mse.mean():.5f}")
+    print(f"min is {mse.min():.5f}")
+    print(f"max is {mse.max():.5f}")
+    print(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
-    with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
+    with open(f"threshold_centralized/threshold_centralized_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
         t.write(str(tr))
-    print(f"Calculated threshold is {tr}")
+    print(f"Calculated threshold is {tr:.5f}")
     return tr
 
 
 # %%
 def test(net, x_test, tr):
-    data_x = x_test
     net.eval()
-    data_x = data_x.send(v_hook)
-    net.send(data_x.location)
-    x_test_predictions = net(data_x)
+    x_test_predictions = net(x_test)
     print("Calculating MSE on test set...")
-    mse_test = np.mean(np.power(data_x.get().data.numpy() - x_test_predictions.get().data.numpy(), 2), axis=1)
+    mse_test = np.mean(np.power(x_test.data.numpy() - x_test_predictions.data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
@@ -132,23 +118,22 @@ class Net(nn.Module):
         x = torch.tanh(self.fc6(x))
         x = torch.tanh(self.fc7(x))
         x = self.fc8(x)
-        return torch.softmax(x, dim=1)
+        return x
 
 
-# %%
 def main(argv):
     if len(argv) > 2:
         raise app.UsageError("Expected one command-line argument(s), "
-                             f"got: {argv}")
-    # %%
+                             f"got: {argv}.")
     input_dim = FLAGS.Input_dim
+    # %%
     net = Net(input_dim)
+    net.to(device)
     # %%
     training_data, input_dim = get_train_data(input_dim)
-    x_train, x_opt, x_test = np.split(
-        training_data.sample(frac=1, random_state=1),
-        [int(1 / 3 * len(training_data)),
-         int(2 / 3 * len(training_data))])
+    x_train, x_opt, x_test = np.split(training_data.sample(frac=1, random_state=1),
+                                      [int(1 / 3 * len(training_data)),
+                                       int(2 / 3 * len(training_data))])
     # %%
     x_train, x_opt, x_test = create_scalar(x_opt, x_test, x_train)
     # %%
@@ -156,23 +141,20 @@ def main(argv):
     epochs = FLAGS.Epochs
     learn_rate = FLAGS.Learn_rate
     # %%
-    mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float(),
-                x_opt=torch.from_numpy(x_opt).float(),
-                batch_size=batch_size,
-                epochs=epochs,
+    mse = train(net,
+                torch.from_numpy(x_train).float(),
+                batch_size,
+                epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
     print(tr)
     # %%
     test(net,
-         torch.from_numpy(x_test).float(), tr=tr)
-    PATH = FLAGS.Current_dir + "PyModels/multiModel"
+         torch.from_numpy(x_test).float(),
+         tr=tr)
 
-    torch.save(net.state_dict(), os.path.join(PATH, f"multiworker_base_{tr:.3f}.pt"),
-               _use_new_zipfile_serialization=False)
-
-
+    PATH = FLAGS.Current_dir + "PyModels/centralizedModel"
+    torch.save(net.state_dict(), os.path.join(PATH, f"centralized_base_{tr:.3f}.pt"))
     os._exit(0)
 
 
