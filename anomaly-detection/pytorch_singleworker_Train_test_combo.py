@@ -1,15 +1,22 @@
 # %%
+
 import os
 from glob import iglob
 
+import lime
+import lime.lime_tabular
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scikitplot as skplt
 import syft as sy
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from absl import app
 from absl import flags
+from sklearn.metrics import recall_score, accuracy_score, precision_score, \
+    confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler
 from syft.federated.floptimizer import Optims
 from tqdm import tqdm
@@ -23,7 +30,8 @@ flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
 v_hook = sy.VirtualWorker(hook=hook, id="v")
-workers = ['v']
+testing_hook = sy.VirtualWorker(hook=hook, id="testing")
+workers = ['v', "testing"]
 
 
 # %%
@@ -31,10 +39,22 @@ def get_train_data(top_n_features=10):
     print("Loading combined training data...")
     df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
                    ignore_index=True)
-    fisher = pd.read_csv("../../fisher.csv")
+    fisher = pd.read_csv("../fisher.csv")
     features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
-    return df, top_n_features
+    return df, top_n_features, features
+
+
+# %%
+def load_mal_data():
+    df_mirai = pd.concat((pd.read_csv(f) for f in iglob("../data/**/mirai_attacks/*.csv", recursive=True)),
+                         ignore_index=True)
+    df_gafgyt = pd.DataFrame()
+    for f in iglob("../data/**/gafgyt_attacks/*.csv", recursive=True):
+        #    if 'tcp.csv' in f or 'udp.csv' in f:
+        #        continue
+        df_gafgyt = df_gafgyt.append(pd.read_csv(f), ignore_index=True)
+    return df_mirai.append(df_gafgyt)
 
 
 # %%
@@ -44,7 +64,7 @@ def create_scalar(x_opt, x_test, x_train):
     x_train = scalar.transform(x_train)
     x_opt = scalar.transform(x_opt)
     x_test = scalar.transform(x_test)
-    return x_train, x_opt, x_test
+    return x_train, x_opt, x_test, scalar
 
 
 # %%
@@ -83,17 +103,83 @@ def cal_threshold(mse, input_dim):
 
 
 # %%
-def test(net, x_test, tr):
+def evaluation(net, x_test, tr):
     x_test = x_test.send('v')
     net.send(x_test.location)
     x_test_predictions = net(x_test)
-    net.get()
     print("Calculating MSE on test set...")
     mse_test = np.mean(np.power(x_test.get().data.numpy() - x_test_predictions.get().data.numpy(), 2), axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
     print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+
+
+# %%
+def test_with_data(net, tr, df_malicious, features, df, scaler, x_test, x_train):
+    print(f"Calculated threshold is {tr}")
+    net.eval()
+    model = AnomalyModel(net, tr, scaler)
+    # %% pandas data grabbing
+    df_benign = pd.DataFrame(x_test, columns=df.columns)
+    df_benign["malicious"] = 0
+    df_malicious = df_malicious.sample(n=df_benign.shape[0], random_state=17)[list(features)]
+    df_malicious["malicious"] = 1
+    df = df_benign.append(df_malicious)
+    X_test = df.drop(columns=["malicious"]).values
+    X_test_scaled = scaler.transform(X_test)
+    Y_test = df["malicious"]
+    Y_pred = model.predict(torch.from_numpy(X_test_scaled).float())
+    # %% printing to console
+    printing_press(Y_pred, Y_test)
+    # %% writing to lime html files
+    lime_writing(X_test, Y_test, df, model, x_train)
+
+
+# %%
+def lime_writing(X_test, Y_test, df, model, x_train):
+    print("explaining with LIME\n---------------------------------")
+    for j in range(5):
+        i = np.random.randint(0, X_test.shape[0])
+        print(f"Explaining for record nr {i}")
+        explainer = lime.lime_tabular.LimeTabularExplainer(
+            x_train,
+            feature_names=df.drop(columns=["malicious"]).columns.tolist(),
+            discretize_continuous=True)
+        exp = explainer.explain_instance(X_test[i], model.scale_predict_classes)
+        exp.save_to_file(f"lime_singleworker/explanation{j}.html")
+        print(exp.as_list())
+        print("Actual class")
+        print(Y_test.iloc[[i]])
+    print("---------------------------------")
+
+
+# %%
+def printing_press(Y_pred, Y_test):
+    print(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    print(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
+    print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
+    print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    skplt.metrics.plot_confusion_matrix(Y_test,
+                                        Y_pred,
+                                        title="single worker Test",
+                                        text_fontsize="large")
+    plt.show()
+
+
+# %%
+def testing(top_n_features):
+    print("Testing data")
+    df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv",
+                                                  recursive=True)), ignore_index=True)
+    fisher = pd.read_csv("../fisher.csv")
+    features = fisher.iloc[0:int(top_n_features)]["Feature"].values
+    df = df[list(features)]
+    x_train, x_opt, x_test = np.split(df.sample(frac=1, random_state=17), [int(1 / 3 * len(df)), int(2 / 3 * len(df))])
+    scaler = StandardScaler()
+    scaler.fit(x_train.append(x_opt))
+    return df, features, scaler, x_test, x_train
 
 
 # %%
@@ -122,6 +208,32 @@ class Net(nn.Module):
 
 
 # %%
+class AnomalyModel:
+    def __init__(self, model, threshold, scaler):
+        self.model = model
+        self.threshold = threshold
+        self.scaler = scaler
+
+    def predict(self, x):
+        self.model = self.model.get()
+        x_pred = self.model(x)
+        mse = np.mean(np.power(x.data.numpy() - x_pred.data.numpy(), 2), axis=1)
+        y_pred = mse > self.threshold
+        return y_pred.astype(int)
+
+    def scale_predict_classes(self, x):
+        x = self.scaler.transform(x)
+        y_pred = self.predict(torch.from_numpy(x).float())
+        classes_arr = []
+        for e in y_pred:
+            el = [0, 0]
+            el[e] = 1
+            classes_arr.append(el)
+
+        return np.array(classes_arr)
+
+
+# %%
 
 def main(argv):
     if len(argv) > 2:
@@ -131,13 +243,15 @@ def main(argv):
     input_dim = FLAGS.Input_dim
     net = Net(input_dim)
     # %%
-    training_data, input_dim = get_train_data(input_dim)
+    training_data, input_dim, features = get_train_data(input_dim)
+    df_malicious = load_mal_data()
     x_train, x_opt, x_test = np.split(
         training_data.sample(frac=1, random_state=1),
         [int(1 / 3 * len(training_data)),
          int(2 / 3 * len(training_data))])
     # %%
-    x_train, x_opt, x_test = create_scalar(x_opt, x_test, x_train)
+    # x_training, x_testing = x_train, x_test
+    x_train, x_opt, x_test, scalar = create_scalar(x_opt, x_test, x_train)
     # %%
     batch_size = FLAGS.Batch_size
     epochs = FLAGS.Epochs
@@ -151,12 +265,17 @@ def main(argv):
     tr = cal_threshold(mse=mse, input_dim=input_dim)
     print(tr)
     # %%
-    test(net,
-         torch.from_numpy(x_test).float(), tr=tr)
+    evaluation(net,
+               torch.from_numpy(x_test).float(), tr=tr)
 
-    PATH = FLAGS.Current_dir + "PyModels/singleModel"
-    torch.save(net.state_dict(), os.path.join(PATH, f"single_worker_{tr:.3f}.pt"))
-
+    test_with_data(net=net,
+                   df_malicious=df_malicious,
+                   tr=tr,
+                   df=training_data,
+                   x_train=x_train,
+                   x_test=x_test,
+                   scaler=scalar,
+                   features=features)
     os._exit(0)
 
 
