@@ -92,8 +92,8 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_x = x_train[i:i + batch_size].to(device0)
-            batch_y = x_opt[i:i + batch_size].to(device0)
+            batch_x = x_train[i:i + batch_size].to(device1)
+            batch_y = x_opt[i:i + batch_size].to(device2)
             data_x = batch_x[::2]
             data_y = batch_x[1::2]
             target_x = batch_y[::2]
@@ -287,8 +287,8 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float().to(device0),
-                x_opt=torch.from_numpy(x_opt).float().to(device0),
+                x_train=torch.from_numpy(x_train).float().to(device1),
+                x_opt=torch.from_numpy(x_opt).float().to(device2),
                 batch_size=batch_size,
                 epochs=epochs,
                 learn_rate=learn_rate)

@@ -24,7 +24,7 @@ from tqdm import tqdm
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
-flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
+flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 FLAGS = flags.FLAGS
 if torch.cuda.is_available():
@@ -89,10 +89,7 @@ def printing_press(Y_pred, Y_test):
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Centralized Test",
-                                        text_fontsize="large",
-                                        labels=['benign', 'attack'],
-                                        true_labels=['benign'],
-                                        pred_labels=['attack'])
+                                        text_fontsize="large")
     plt.savefig(
         f"figures/centralized/centralizedConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 
@@ -233,7 +230,10 @@ def main(argv):
     # logging.basicConfig(
     #    filename="entralized_log.log",
     #    level=print)
-    print(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
+          f" Learn Rate:{FLAGS.Learn_rate}."
+          f" Epochs: {FLAGS.Epochs}."
+          f"Batch Size: {FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)

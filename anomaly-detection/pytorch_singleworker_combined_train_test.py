@@ -26,7 +26,7 @@ from tqdm import tqdm
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
-flags.DEFINE_integer("Input_dim", 115, "the input dimension, used from getting the train data")
+flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
@@ -35,11 +35,13 @@ eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
-    device = torch.device("cuda:1")
-    print(f"Running on the GPU: {device}")
+    device0 = torch.device("cuda:1")
+    device1 = torch.cuda
+    print(f"Running on the GPU: {torch.cuda}")
 else:
-    device = torch.device("cpu")
-    print(f"Running on the CPU: {device}")
+    device0 = torch.device("cpu")
+    device1 = torch.device("cpu")
+    print(f"Running on the CPU: {torch.device('cpu')}")
 
 
 # %%
@@ -84,7 +86,7 @@ def train(net, x_train, batch_size, epochs, learn_rate):
     optims = Optims(workers, optim=optimizer)
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_x = x_train[i:i + batch_size].to(device)
+            batch_x = x_train[i:i + batch_size].to(device1)
             batch_x = batch_x.send('v')
             net.send(batch_x.location)
             opt = optims.get_optim(batch_x.location.id)
@@ -117,7 +119,7 @@ def cal_threshold(mse, input_dim):
 def evaluation(net, x_test, tr):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-    x_test = x_test.to(device)
+    x_test = x_test.to(device0)
     x_test = x_test.send(eval_hook)
     net.eval()
     net.send(x_test.location)
@@ -218,7 +220,7 @@ class AnomalyModel:
         self.scaler = scaler
 
     def predict(self, x):
-        x = x.to(device)
+        x = x.to(device0)
         x = x.send(tester_hook)
         self.model = self.model.get()
         self.model.send(x.location)
@@ -254,7 +256,7 @@ def main(argv):
     print(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to(device)
+    net = Net(input_dim).to(device0)
     # %%
     print(f"Training--------------------")
     training_data, input_dim, features = get_train_data(input_dim)
@@ -273,7 +275,7 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float().to(device),
+                x_train=torch.from_numpy(x_train).float().to(device1),
                 batch_size=batch_size,
                 epochs=epochs,
                 learn_rate=learn_rate)
