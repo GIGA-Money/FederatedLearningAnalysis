@@ -36,7 +36,7 @@ tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
     device0 = torch.device("cuda:1")
-    device1 = torch.cuda
+    device1 = torch.device("cuda:3")
     print(f"Running on the GPU: {torch.cuda}")
 else:
     device0 = torch.device("cpu")
@@ -253,7 +253,10 @@ def main(argv):
     # logging.basicConfig(
     #    filename="./figures/singleWorker/singleWorker_log.txt",
     #    level=print)
-    print(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
+          f" Learn Rate:{FLAGS.Learn_rate}."
+          f" Epochs: {FLAGS.Epochs}."
+          f"Batch Size: {FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device0)
