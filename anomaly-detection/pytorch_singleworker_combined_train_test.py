@@ -36,7 +36,7 @@ tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
     device0 = torch.device("cuda:1")
-    print(f"Running on the GPU: {torch.cuda}")
+    print(f"Running on the GPU: {device0}")
 else:
     device0 = torch.device("cpu")
     print(f"Running on the CPU: {torch.device('cpu')}")
