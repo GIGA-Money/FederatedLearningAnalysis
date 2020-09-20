@@ -1,0 +1,33 @@
+¦¦¦¦¦¦¦¦| 2638/2638 [22:41<00:00,  1.94it/s]
+I0917 13:55:19.547188 140350367971136 pytorch_singleworker_combined_train_test.py:96] Epoch: 3. Loss: 0.36811310052871704
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 2638/2638 [23:21<00:00,  1.88it/s]
+I0917 14:18:40.734751 140350367971136 pytorch_singleworker_combined_train_test.py:96] Epoch: 4. Loss: 0.36811310052871704
+I0917 14:18:41.247280 140350367971136 pytorch_singleworker_combined_train_test.py:102] mean
+is 0.36811
+I0917 14:18:41.247407 140350367971136 pytorch_singleworker_combined_train_test.py:103] min is 0.11123
+I0917 14:18:41.247445 140350367971136 pytorch_singleworker_combined_train_test.py:104] max is 2.54532
+I0917 14:18:41.247513 140350367971136 pytorch_singleworker_combined_train_test.py:105] std is 0.54250
+I0917 14:18:41.247577 140350367971136 pytorch_singleworker_combined_train_test.py:109] Calculated threshold is 0.91061
+I0917 14:18:41.247606 140350367971136 pytorch_singleworker_combined_train_test.py:277] 0.91060996
+I0917 14:18:41.801118 140350367971136 pytorch_singleworker_combined_train_test.py:122] Calculating MSE on test set...
+I0917 14:18:43.296188 140350367971136 pytorch_singleworker_combined_train_test.py:128] 29585 false positives on dataset without attacks with size 168795
+I0917 14:18:43.299410 140350367971136 pytorch_singleworker_combined_train_test.py:283] Testing--------------------
+I0917 14:20:00.551652 140350367971136 pytorch_singleworker_combined_train_test.py:133] Calculated threshold is 0.9106099605560303 for testing with data
+I0917 14:20:04.690837 140350367971136 pytorch_singleworker_combined_train_test.py:154] Accuracy:
+ 0.9123048668503214.
+I0917 14:20:04.766236 140350367971136 pytorch_singleworker_combined_train_test.py:155] Recall:
+ 0.999881513077994.
+I0917 14:20:04.839488 140350367971136 pytorch_singleworker_combined_train_test.py:156] Precision score:
+ 0.850851986287558.
+I0917 14:20:05.005331 140350367971136 pytorch_singleworker_combined_train_test.py:157] confusion matrix:
+ [[139210  29585]
+ [    20 168775]].
+I0917 14:20:05.330678 140350367971136 pytorch_singleworker_combined_train_test.py:158] classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.82      0.90    168795
+           1       0.85      1.00      0.92    168795
+
+    accuracy                           0.91    337590
+   macro avg       0.93      0.91      0.91    337590
+weighted avg       0.93      0.91      0.91    337590
