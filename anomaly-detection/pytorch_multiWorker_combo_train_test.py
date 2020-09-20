@@ -206,7 +206,7 @@ def printing_press(Y_pred, Y_test):
                                         title="Multi Worker Test",
                                         text_fontsize="large")
     plt.savefig(
-        f"figures/multiWorker/confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
+        f"figures/multiWorker/multiWorkerConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 
 
 # %%

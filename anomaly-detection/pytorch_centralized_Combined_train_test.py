@@ -91,7 +91,7 @@ def printing_press(Y_pred, Y_test):
                                         title="Centralized Test",
                                         text_fontsize="large")
     plt.savefig(
-        f"figures/centralized/confusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
+        f"figures/centralized/centralizedConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 
 
 # %%
