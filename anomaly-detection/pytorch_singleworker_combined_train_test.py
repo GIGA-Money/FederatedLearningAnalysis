@@ -36,11 +36,9 @@ tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ['v', 'eval', 'testing']
 if torch.cuda.is_available():
     device0 = torch.device("cuda:1")
-    #device1 = torch.device("cuda:3")
     print(f"Running on the GPU: {torch.cuda}")
 else:
     device0 = torch.device("cpu")
-    #device1 = torch.device("cpu")
     print(f"Running on the CPU: {torch.device('cpu')}")
 
 
@@ -146,7 +144,6 @@ def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features,
     X_test = df.drop(columns=["malicious"]).values
     X_test_scaled = scalar.transform(X_test)
     Y_test = df["malicious"]
-
     Y_pred = model.predict(torch.from_numpy(X_test_scaled).float())
     #   printing to console
     printing_press(Y_pred, Y_test)
@@ -161,6 +158,10 @@ def printing_press(Y_pred, Y_test):
     print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
     print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
+          f" Learn Rate:{FLAGS.Learn_rate}."
+          f" Epochs: {FLAGS.Epochs}."
+          f"Batch Size: {FLAGS.Batch_size}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="single worker Test",
@@ -253,10 +254,7 @@ def main(argv):
     # logging.basicConfig(
     #    filename="./figures/singleWorker/singleWorker_log.txt",
     #    level=print)
-    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
-          f" Learn Rate:{FLAGS.Learn_rate}."
-          f" Epochs: {FLAGS.Epochs}."
-          f"Batch Size: {FLAGS.Batch_size}")
+
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device0)

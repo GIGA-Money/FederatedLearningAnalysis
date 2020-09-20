@@ -86,6 +86,10 @@ def printing_press(Y_pred, Y_test):
     print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
     print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
+          f" Learn Rate:{FLAGS.Learn_rate}."
+          f" Epochs: {FLAGS.Epochs}."
+          f"Batch Size: {FLAGS.Batch_size}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Centralized Test",
@@ -230,10 +234,7 @@ def main(argv):
     # logging.basicConfig(
     #    filename="entralized_log.log",
     #    level=print)
-    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
-          f" Learn Rate:{FLAGS.Learn_rate}."
-          f" Epochs: {FLAGS.Epochs}."
-          f"Batch Size: {FLAGS.Batch_size}")
+
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device)
