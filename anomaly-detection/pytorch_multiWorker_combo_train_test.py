@@ -1,24 +1,25 @@
 # %%
-import os
 from glob import iglob
-import logging
+import os
+
+from absl import app
+from absl import flags
+# import logging
 import lime
 import lime.lime_tabular
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib
 import scikitplot as skplt
-import syft as sy
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from absl import app
-from absl import flags
 from sklearn.metrics import recall_score, accuracy_score, precision_score, \
     confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler
+import syft as sy
 from syft.federated.floptimizer import Optims
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from tqdm import tqdm
 
 # %%
@@ -39,12 +40,12 @@ if torch.cuda.is_available():
     device0 = torch.device("cuda:0")
     device1 = torch.device("cuda:1")
     device2 = torch.device("cuda:2")
-    logging.info(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
+    print(f"Running on the GPU: {device0}, {device1}, {device2},\n(but really only the first one)")
 else:
     device0 = torch.device("cpu")
     device1 = torch.device("cpu")
     device2 = torch.device("cpu")
-    logging.warning(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or software wise?")
+    print(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or software wise?")
 
 
 # %%
@@ -63,7 +64,7 @@ def load_mal_data():
 
 # %%
 def get_train_data(top_n_features=10):
-    logging.info("Loading combined training data...")
+    print("Loading combined training data...")
     df = pd.concat((
         pd.read_csv(f) for f in iglob('../data/**/benign_traffic.csv', recursive=True)),
         ignore_index=True)
@@ -113,20 +114,20 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 net.get()
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-        logging.info(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
+        print(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
     return np.mean(np.power(data.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
 # %%
 def cal_threshold(mse, input_dim):
-    logging.info("mean is %.5f" % mse.mean())
-    logging.info("min is %.5f" % mse.min())
-    logging.info("max is %.5f" % mse.max())
-    logging.info("std is %.5f" % mse.std())
+    print("mean is %.5f" % mse.mean())
+    print("min is %.5f" % mse.min())
+    print("max is %.5f" % mse.max())
+    print("std is %.5f" % mse.std())
     tr = mse.mean() + mse.std()
     # with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
     #    t.write(str(tr))
-    logging.info(f"Calculated threshold is {tr}")
+    print(f"Calculated threshold is {tr}")
     return tr
 
 
@@ -139,13 +140,13 @@ def evaluation(net, x_test, tr):
     net.eval()
     net.send(x_test.location)
     x_test_predictions = net(x_test)
-    logging.info("Calculating MSE on test set...")
+    print("Calculating MSE on test set...")
     mse_test = np.mean(np.power(x_test.get().cpu().data.numpy() - x_test_predictions.get().cpu().data.numpy(), 2),
                        axis=1)
     over_tr = mse_test > tr
     false_positives = sum(over_tr)
     test_size = mse_test.shape[0]
-    logging.info(f"{false_positives} false positives on dataset without attacks with size {test_size}")
+    print(f"{false_positives} false positives on dataset without attacks with size {test_size}")
 
 
 # %%
@@ -175,7 +176,7 @@ class Net(nn.Module):
 
 # %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
-    logging.info(f"Calculated threshold is {tr}")
+    print(f"Calculated threshold is {tr}")
     model = AnomalyModel(net, tr, scalar)
     # %% pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
@@ -195,11 +196,11 @@ def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features,
 
 # %%
 def printing_press(Y_pred, Y_test):
-    logging.info(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
-    logging.info(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
-    logging.info(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
-    logging.info(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
-    logging.info(f"classification report:\n {classification_report(Y_test, Y_pred)}")
+    print(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
+    print(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
+    print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
+    print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Multi Worker Test",
@@ -263,10 +264,10 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     matplotlib.use("pdf")
-    logging.basicConfig(
-        filename="multiWorker_log.log",
-        level=logging.INFO)
-    logging.info(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
+    # logging.basicConfig(
+    #    filename="multiWorker_log.log",
+    #    level=print)
+    print(f"arguments: {FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}")
     # %%
     input_dim = FLAGS.Input_dim
     net = Net(input_dim).to(device0)
@@ -292,13 +293,13 @@ def main(argv):
                 epochs=epochs,
                 learn_rate=learn_rate)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
-    logging.info(tr)
+    print(tr)
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(),
                tr=tr)
 
-    logging.info(f"Testing--------------------")
+    print(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
                    scalar=scalar, x_trainer=x_trainer, x_tester=x_tester,
                    tr=tr, df_malicious=load_mal_data(), features=features)
