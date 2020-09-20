@@ -84,13 +84,13 @@ def printing_press(Y_pred, Y_test):
     print(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
     print(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
     print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
-    print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred, labels=['benign', 'attack'])}.")
+    print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
                                         title="Centralized Test",
                                         text_fontsize="large",
-                                        labels=['benign', 'attack'])
+                                        labels=['benign', 'attack', 'benign', 'attack'])
     plt.savefig(
         f"figures/centralized/centralizedConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 
