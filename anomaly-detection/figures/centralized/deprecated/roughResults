@@ -1,0 +1,31 @@
+]
+I0917 12:22:22.598353 140505227953984 pytorch_centralized_Combined_train_test.py:138] Epoch: 4. Train_Loss: 0.36810.
+I0917 12:22:22.605520 140505227953984 pytorch_centralized_Combined_train_test.py:144] mean is 0.36810
+I0917 12:22:22.605749 140505227953984 pytorch_centralized_Combined_train_test.py:145] min is 0.11124
+I0917 12:22:22.605866 140505227953984 pytorch_centralized_Combined_train_test.py:146] max is 2.54535
+I0917 12:22:22.606083 140505227953984 pytorch_centralized_Combined_train_test.py:147] std is 0.54248
+I0917 12:22:22.606294 140505227953984 pytorch_centralized_Combined_train_test.py:151] Calculated threshold is 0.91058
+I0917 12:22:22.606389 140505227953984 pytorch_centralized_Combined_train_test.py:256] 0.9105768
+I0917 12:22:22.701630 140505227953984 pytorch_centralized_Combined_train_test.py:162] Calculating MSE on test set...
+I0917 12:22:23.234366 140505227953984 pytorch_centralized_Combined_train_test.py:167] 29585 false positives on dataset without attacks with size 168795
+I0917 12:22:23.237470 140505227953984 pytorch_centralized_Combined_train_test.py:262] Testing--------------------
+I0917 12:23:37.254532 140505227953984 pytorch_centralized_Combined_train_test.py:50] Calculated threshold is 0.9105768203735352
+I0917 12:23:38.784265 140505227953984 pytorch_centralized_Combined_train_test.py:82] Accuracy:
+ 0.9123048668503214.
+I0917 12:23:38.856408 140505227953984 pytorch_centralized_Combined_train_test.py:83] Recall:
+ 0.999881513077994.
+I0917 12:23:38.929553 140505227953984 pytorch_centralized_Combined_train_test.py:84] Precision score:
+ 0.850851986287558.
+I0917 12:23:39.088827 140505227953984 pytorch_centralized_Combined_train_test.py:85] confusion matrix:
+ [[139210  29585]
+ [    20 168775]].
+I0917 12:23:39.404142 140505227953984 pytorch_centralized_Combined_train_test.py:86] classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.82      0.90    168795
+           1       0.85      1.00      0.92    168795
+
+    accuracy                           0.91    337590
+   macro avg       0.93      0.91      0.91    337590
+weighted avg       0.93      0.91      0.91    337590
+
