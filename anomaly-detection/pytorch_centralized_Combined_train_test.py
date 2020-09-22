@@ -195,7 +195,10 @@ class Net(nn.Module):
         x = torch.tanh(self.fc6(x))
         x = torch.tanh(self.fc7(x))
         x = self.fc8(x)
-        return torch.softmax(x, dim=1)
+        return x
+        # removed  return torch.softmax(x, dim=1), as the original code
+        # (even though it says it used softmax during classification, not detection),
+        # did not use softmax on the exit of the training, so just returning 'x
 
 
 # %%
