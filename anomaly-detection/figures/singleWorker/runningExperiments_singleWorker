@@ -178,3 +178,34 @@ weighted avg       0.82      0.82      0.81    337590
 
 Hyper Params: Input Dim: 15. Learn Rate:0.001. Epochs: 5.Batch Size: 64
 
+------
+poch: 4. Loss: 0.37514564394950867
+mean is 0.37515
+min is 0.11426
+max is 2.55492
+std is 0.54725
+Calculated threshold is 0.92240
+threshold: 0.9223977327346802
+Calculating MSE on test set...
+29555 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 0.9223977327346802 for testing with data
+Accuracy:
+ 0.9123937320418258.
+Recall:
+ 0.999881513077994.
+Precision score:
+ 0.8509806887510715.
+confusion matrix:
+ [[139240  29555]
+ [    20 168775]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.82      0.90    168795
+           1       0.85      1.00      0.92    168795
+
+    accuracy                           0.91    337590
+   macro avg       0.93      0.91      0.91    337590
+weighted avg       0.93      0.91      0.91    337590
+Hyper Params: Input Dim: 112. Learn Rate:0.001. Epochs: 5.Batch Size: 64
