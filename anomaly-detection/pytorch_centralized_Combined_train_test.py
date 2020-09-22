@@ -199,6 +199,8 @@ class Net(nn.Module):
         # removed  return torch.softmax(x, dim=1), as the original code
         # (even though it says it used softmax during classification, not detection),
         # did not use softmax on the exit of the training, so just returning 'x
+        # the original soft max was negatively impacting the loss and accuracy of the
+        # testing, as loss would never decrease, and accuracy would never peak above .89.
 
 
 # %%
