@@ -169,7 +169,7 @@ class Net(nn.Module):
         x = torch.tanh(self.fc6(x))
         x = torch.tanh(self.fc7(x))
         x = self.fc8(x)
-        return torch.softmax(x, dim=1)
+        return x
 
 
 # %%
