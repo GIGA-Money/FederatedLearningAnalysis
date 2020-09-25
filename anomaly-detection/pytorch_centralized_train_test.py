@@ -161,10 +161,10 @@ def printing_press(Y_pred, Y_test):
           f" Learn Rate:{FLAGS.Learn_rate}."
           f" Epochs: {FLAGS.Epochs}."
           f" Batch Size: {FLAGS.Batch_size}")
-    CM = skplt.metrics.plot_confusion_matrix(Y_test,
-                                             Y_pred,
-                                             title="Centralized Test CM of benign and malicious traffic",
-                                             text_fontsize="large")
+    skplt.metrics.plot_confusion_matrix(confusion_matrix(Y_test, Y_pred),
+                                        title="Centralized Test of Attack Detection",
+                                        text_fontsize="large"
+                                        )
     plt.savefig(
         f"figures/centralized/CM/centralizedConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
 

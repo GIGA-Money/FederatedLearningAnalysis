@@ -6,7 +6,7 @@ from absl import app
 def accuracy_plt(plt):
     title = "Accuracy"
     acc = plt
-    acc.title(f"Measure of {title} across Input Dimension")
+    acc.title(f"Autoencoder {title} for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
     acc
@@ -16,7 +16,7 @@ def accuracy_plt(plt):
 def precision_plt(plt):
     title = "Precision"
     precision = plt
-    precision.title(f"Measure of {title} across Input Dimension")
+    precision.title(f"Autoencoder {title} for different number of features")
     precision.xlabel("Epochs")
     precision.ylabel(f"{title}")
     print("precision")
@@ -25,7 +25,7 @@ def precision_plt(plt):
 def recall_plt(plt):
     title = "Recall"
     recall = plt
-    recall.title(f"Measure of {title} across Input Dimension")
+    recall.title(f"Autoencoder {title} for different number of features")
     recall.xlabel("Epochs")
     recall.ylabel(f"{title}")
     print("recall")
@@ -34,14 +34,14 @@ def recall_plt(plt):
 def f1_plt(plt):
     title = "F-Measure"
     f1 = plt
-    f1.title(f"Measure of {title} across Input Dimension")
+    f1.title(f"Autoencoder {title} for different number of features")
     f1.xlabel("Epochs")
     f1.ylabel(f"{title}")
     print("F-measure")
 
 def get_input_dim(input_count):
     input_dim_list = []
-    
+
     print("input dim count")
     return input_dim_list
 

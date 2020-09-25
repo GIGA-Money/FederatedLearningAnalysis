@@ -114,15 +114,15 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 torch.cuda.synchronize()
         epoch_list.append(epoch)
         loss = train_loss.get().item()
-        train_loss_list.append(loss)
-        train_plt.style.use("ggplot")
-        train_plt.xlabel("Epoch")
-        train_plt.ylabel("Loss")
-        train_plt.title(f"Measure of Loss across Epochs with {FLAGS.Input_dim} Input Dimensions")
-        train_plt.plot(epoch_list, train_loss_list)
-        train_plt.savefig(
-            f"figures/multiWorker/Loss/lossAcrossEpoch_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
         print(f"Epoch: {epoch}. Loss 1: {loss:.5f}")
+    train_loss_list.append(loss)
+    train_plt.style.use("ggplot")
+    train_plt.xlabel("Epoch")
+    train_plt.ylabel("Loss")
+    train_plt.title(f"Measure of Loss across Epochs with {FLAGS.Input_dim} Input Dimensions")
+    train_plt.plot(epoch_list, train_loss_list)
+    train_plt.savefig(
+        f"figures/multiWorker/Loss/lossAcrossEpoch_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
     return np.mean(np.power(data.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
@@ -191,7 +191,7 @@ def printing_press(Y_pred, Y_test):
           f" Batch Size: {FLAGS.Batch_size}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
-                                        title="Multi Worker Test CM of benign and malicious traffic",
+                                        title="Multi Worker Test of Attack Detection",
                                         text_fontsize="large")
     plt.savefig(
         f"figures/multiWorker/multiWorkerConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")

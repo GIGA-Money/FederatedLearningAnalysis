@@ -101,14 +101,14 @@ def train(net, x_train, batch_size, epochs, learn_rate):
         epoch_list.append(epoch)
         loss = train_loss.get().item()
         train_loss_list.append(loss)
-        train_plt.style.use("ggplot")
-        train_plt.xlabel("Epoch")
-        train_plt.ylabel("Loss")
-        train_plt.title(f"Measure of Loss across Epochs with {FLAGS.Input_dim} Input Dimensions")
-        train_plt.plot(epoch_list, train_loss_list)
-        train_plt.savefig(
-            f"figures/singleWorker/Loss/lossAcrossEpoch_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
         print(f"Epoch: {epoch}. Loss: {loss:.5f}")
+    train_plt.style.use("ggplot")
+    train_plt.xlabel("Epoch")
+    train_plt.ylabel("Loss")
+    train_plt.title(f"Measure of Loss across Epochs with {FLAGS.Input_dim} Input Dimensions")
+    train_plt.plot(epoch_list, train_loss_list)
+    train_plt.savefig(
+        f"figures/singleWorker/Loss/lossAcrossEpoch_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
     return np.mean(np.power(batch_x.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
@@ -177,7 +177,7 @@ def printing_press(Y_pred, Y_test):
           f" Batch Size: {FLAGS.Batch_size}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
-                                        title="single worker Test CM of benign and malicious traffic",
+                                        title="single worker Test of Attack Detection",
                                         text_fontsize="large")
     plt.savefig(
         f"figures/singleWorker/singleWorkerConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
