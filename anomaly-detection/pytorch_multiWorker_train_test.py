@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import scikitplot as skplt
 from sklearn.metrics import recall_score, accuracy_score, precision_score, \
-    confusion_matrix, classification_report
+    confusion_matrix, classification_report, f1_score
 from sklearn.preprocessing import StandardScaler
 import syft as sy
 from syft.federated.floptimizer import Optims
@@ -25,7 +25,7 @@ from tqdm import tqdm
 # %%
 flags.DEFINE_integer("Batch_size", 64, "The size of the batch from a round of training")
 flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
-flags.DEFINE_float("Learn_rate", 0.001, "The rate of learning by the optimizer")
+flags.DEFINE_float("Learn_rate", 0.01, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
 FLAGS = flags.FLAGS
@@ -41,23 +41,9 @@ if torch.cuda.is_available():
     print(f"Running on the GPU: {device0}")
 else:
     device0 = torch.device("cpu")
-    #device1 = torch.device("cpu")
-    #device2 = torch.device("cpu")
-    print(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or environment check?")
-
-
-# %%
-
-
-def load_mal_data():
-    df_mirai = pd.concat((pd.read_csv(f) for f in iglob("../data/**/mirai_attacks/*.csv", recursive=True)),
-                         ignore_index=True)
-    df_gafgyt = pd.DataFrame()
-    for f in iglob("../data/**/gafgyt_attacks/*.csv", recursive=True):
-        #    if 'tcp.csv' in f or 'udp.csv' in f:
-        #        continue
-        df_gafgyt = df_gafgyt.append(pd.read_csv(f), ignore_index=True)
-    return df_mirai.append(df_gafgyt)
+    # device1 = torch.device("cpu")
+    # device2 = torch.device("cpu")
+    print(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or environment check?)")
 
 
 # %%
@@ -70,6 +56,18 @@ def get_train_data(top_n_features=10):
     features = fisher.iloc[0:int(top_n_features)]['Feature'].values
     df = df[list(features)]
     return df, top_n_features, features
+
+
+# %%
+def load_mal_data():
+    df_mirai = pd.concat((pd.read_csv(f) for f in iglob("../data/**/mirai_attacks/*.csv", recursive=True)),
+                         ignore_index=True)
+    df_gafgyt = pd.DataFrame()
+    for f in iglob("../data/**/gafgyt_attacks/*.csv", recursive=True):
+        #    if 'tcp.csv' in f or 'udp.csv' in f:
+        #        continue
+        df_gafgyt = df_gafgyt.append(pd.read_csv(f), ignore_index=True)
+    return df_mirai.append(df_gafgyt)
 
 
 # %%
@@ -86,8 +84,10 @@ def create_scalar(x_opt, x_test, x_train):
 def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
-    batch_x, batch_y, data, outputs, loss = 0, 0, 0, 0, 0
+    batch_x, batch_y, data, outputs, train_loss = 0, 0, 0, 0, 0
     optims = Optims(workers, optim=optimizer)
+    train_loss_list, epoch_list = [], []
+    train_plt = plt
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
             batch_x = x_train[i:i + batch_size].to(device0)
@@ -106,13 +106,23 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
                 opt = optims.get_optim(data.location.id)
                 opt.zero_grad()
                 outputs = net(data)
-                loss = loss_function(outputs, data)
-                loss.backward()
+                train_loss = loss_function(outputs, data)
+                train_loss.backward()
                 opt.step()
                 net.get()
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-        print(f"Epoch: {epoch}. Loss 1: {loss.get():.3f}")
+        epoch_list.append(epoch)
+        loss = train_loss.get().item()
+        train_loss_list.append(loss)
+        train_plt.style.use("ggplot")
+        train_plt.xlabel("Epoch")
+        train_plt.ylabel("Loss")
+        train_plt.title(f"Measure of Loss across Epochs with {FLAGS.Input_dim} Input Dimensions")
+        train_plt.plot(epoch_list, train_loss_list)
+        train_plt.savefig(
+            f"figures/multiWorker/Loss/lossAcrossEpoch_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
+        print(f"Epoch: {epoch}. Loss 1: {loss:.5f}")
     return np.mean(np.power(data.get().cpu().data.numpy() - outputs.get().cpu().data.numpy(), 2), axis=1)
 
 
@@ -148,31 +158,6 @@ def evaluation(net, x_test, tr):
 
 
 # %%
-class Net(nn.Module):
-    def __init__(self, input_dim=10):
-        super().__init__()
-        self.fc1 = nn.Linear(input_dim, int(0.75 * input_dim))
-        self.fc2 = nn.Linear(int(0.75 * input_dim), int(0.5 * input_dim))
-        self.fc3 = nn.Linear(int(0.5 * input_dim), int(0.33 * input_dim))
-        self.fc4 = nn.Linear(int(0.33 * input_dim), int(0.25 * input_dim))
-        self.fc5 = nn.Linear(int(0.25 * input_dim), int(0.33 * input_dim))
-        self.fc6 = nn.Linear(int(0.33 * input_dim), int(0.5 * input_dim))
-        self.fc7 = nn.Linear(int(0.5 * input_dim), int(0.75 * input_dim))
-        self.fc8 = nn.Linear(int(0.75 * input_dim), input_dim)
-
-    def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = torch.tanh(self.fc3(x))
-        x = torch.tanh(self.fc4(x))
-        x = torch.tanh(self.fc5(x))
-        x = torch.tanh(self.fc6(x))
-        x = torch.tanh(self.fc7(x))
-        x = self.fc8(x)
-        return x
-
-
-# %%
 def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
     print(f"Calculated threshold is {tr}")
     model = AnomalyModel(net, tr, scalar)
@@ -197,15 +182,16 @@ def printing_press(Y_pred, Y_test):
     print(f"Accuracy:\n {accuracy_score(Y_test, Y_pred)}.")
     print(f"Recall:\n {recall_score(Y_test, Y_pred)}.")
     print(f"Precision score:\n {precision_score(Y_test, Y_pred)}.")
+    print(f"f1-score:\n {f1_score(Y_test, Y_pred)}")
     print(f"confusion matrix:\n {confusion_matrix(Y_test, Y_pred)}.")
     print(f"classification report:\n {classification_report(Y_test, Y_pred)}")
-    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}."
-          f" Learn Rate:{FLAGS.Learn_rate}."
-          f" Epochs: {FLAGS.Epochs}."
-          f"Batch Size: {FLAGS.Batch_size}")
+    print(f"Hyper Params: Input Dim: {FLAGS.Input_dim}"
+          f" Learn Rate:{FLAGS.Learn_rate}"
+          f" Epochs: {FLAGS.Epochs}"
+          f" Batch Size: {FLAGS.Batch_size}")
     skplt.metrics.plot_confusion_matrix(Y_test,
                                         Y_pred,
-                                        title="Multi Worker Test",
+                                        title="Multi Worker Test CM of benign and malicious traffic",
                                         text_fontsize="large")
     plt.savefig(
         f"figures/multiWorker/multiWorkerConfusionMatrix_{FLAGS.Input_dim}_{FLAGS.Learn_rate}_{FLAGS.Epochs}_{FLAGS.Batch_size}.png")
@@ -227,6 +213,31 @@ def lime_writing(X_test, Y_test, df, model, x_train):
         print("Actual class")
         print(Y_test.iloc[[i]])
     print("---------------------------------")
+
+
+# %%
+class Net(nn.Module):
+    def __init__(self, input_dim=10):
+        super().__init__()
+        self.fc1 = nn.Linear(input_dim, int(0.75 * input_dim))
+        self.fc2 = nn.Linear(int(0.75 * input_dim), int(0.5 * input_dim))
+        self.fc3 = nn.Linear(int(0.5 * input_dim), int(0.33 * input_dim))
+        self.fc4 = nn.Linear(int(0.33 * input_dim), int(0.25 * input_dim))
+        self.fc5 = nn.Linear(int(0.25 * input_dim), int(0.33 * input_dim))
+        self.fc6 = nn.Linear(int(0.33 * input_dim), int(0.5 * input_dim))
+        self.fc7 = nn.Linear(int(0.5 * input_dim), int(0.75 * input_dim))
+        self.fc8 = nn.Linear(int(0.75 * input_dim), input_dim)
+
+    def forward(self, x):
+        x = torch.tanh(self.fc1(x))
+        x = torch.tanh(self.fc2(x))
+        x = torch.tanh(self.fc3(x))
+        x = torch.tanh(self.fc4(x))
+        x = torch.tanh(self.fc5(x))
+        x = torch.tanh(self.fc6(x))
+        x = torch.tanh(self.fc7(x))
+        x = self.fc8(x)
+        return x
 
 
 # %%
