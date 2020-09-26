@@ -116,7 +116,6 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
         loss = train_loss.get().item()
         train_loss_list.append(loss)
         print(f"Epoch: {epoch}. Loss 1: {loss:.5f}")
-    train_loss_list.append(loss)
     train_plt.style.use("ggplot")
     train_plt.xlabel("Epoch")
     train_plt.ylabel("Loss")
