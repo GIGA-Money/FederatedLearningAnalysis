@@ -1,0 +1,35 @@
+
+Epoch: 49. Loss 1: 0.38827
+mean is 0.38827
+min is 0.00673
+max is 7.40702
+std is 1.29322
+Calculated threshold is 1.681488037109375
+1.681488
+Calculating MSE on test set...
+4605 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 1.681488037109375
+Accuracy:
+ 0.8560532006279807.
+Recall:
+ 0.7393880150478391.
+Precision score:
+ 0.9644154238466888.
+f1-score:
+ 0.8370416324340637
+confusion matrix:
+ [[164190   4605]
+ [ 43990 124805]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.79      0.97      0.87    168795
+           1       0.96      0.74      0.84    168795
+
+    accuracy                           0.86    337590
+   macro avg       0.88      0.86      0.85    337590
+weighted avg       0.88      0.86      0.85    337590
+
+Hyper Params: Input Dim: 6 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+----------------
