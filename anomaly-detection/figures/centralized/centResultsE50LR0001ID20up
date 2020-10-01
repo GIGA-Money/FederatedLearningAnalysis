@@ -481,7 +481,40 @@ weighted avg       0.99      0.99      0.99    337590
 
 Hyper Params: Input Dim: 90. Learn Rate:0.001. Epochs: 50. Batch Size: 128
 --------------------
-]
+Epoch: 49. Train_Loss: 0.51501.
+mean is 0.51501
+min is 0.01718
+max is 26.04705
+std is 2.75216
+Calculated threshold is 3.26717
+3.2671654
+Calculating MSE on test set...
+4941 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 3.267165422439575
+Accuracy:
+ 0.98528
+Recall:
+ 0.99984
+Precision score:
+ 0.97156
+f1-score:
+ 0.98550
+confusion matrix:
+ [[163854   4941]
+ [    27 168768]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.97      0.99    168795
+           1       0.97      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 95. Learn Rate:0.001. Epochs: 50. Batch Size: 128
+--------------------
 Epoch: 49. Train_Loss: 0.47465.
 mean is 0.47465
 min is 0.01379
@@ -621,37 +654,3 @@ weighted avg       0.99      0.99      0.99    337590
 Hyper Params: Input Dim: 115. Learn Rate:0.001. Epochs: 50. Batch Size: 128
 
 ---------------
-Epoch: 49. Train_Loss: 0.51501.
-mean is 0.51501
-min is 0.01718
-max is 26.04705
-std is 2.75216
-Calculated threshold is 3.26717
-3.2671654
-Calculating MSE on test set...
-4941 false positives on dataset without attacks with size 168795
-Testing--------------------
-Calculated threshold is 3.267165422439575
-Accuracy:
- 0.98528
-Recall:
- 0.99984
-Precision score:
- 0.97156
-f1-score:
- 0.98550
-confusion matrix:
- [[163854   4941]
- [    27 168768]]
-classification report:
-               precision    recall  f1-score   support
-
-           0       1.00      0.97      0.99    168795
-           1       0.97      1.00      0.99    168795
-
-    accuracy                           0.99    337590
-   macro avg       0.99      0.99      0.99    337590
-weighted avg       0.99      0.99      0.99    337590
-
-Hyper Params: Input Dim: 95. Learn Rate:0.001. Epochs: 50. Batch Size: 128
----------
