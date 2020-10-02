@@ -445,4 +445,72 @@ weighted avg       0.88      0.86      0.86    337590
 Hyper Params: Input Dim: 50 Learn Rate:0.001 Epochs: 50 Batch Size: 128
 -------------------
 
+Epoch: 49. Loss 1: 0.43681
+mean is 0.43681
+min is 0.01157
+max is 12.68555
+std is 1.90628
+Calculated threshold is 2.3430824279785156
+2.3430824
+Calculating MSE on test set...
+3625 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.3430824279785156
+Accuracy:
+ 0.9891584466364525.
+Recall:
+ 0.9997926478864896.
+Precision score:
+ 0.9789714882385359.
+f1-score:
+ 0.9892725247669852
+confusion matrix:
+ [[165170   3625]
+ [    35 168760]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.98      0.99    168795
+           1       0.98      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 55 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+------------
+Epoch: 49. Loss 1: 0.40123
+mean is 0.40123
+min is 0.01528
+max is 11.31948
+std is 1.70129
+Calculated threshold is 2.102515697479248
+2.1025157
+Calculating MSE on test set...
+3921 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.102515697479248
+Accuracy:
+ 0.9882875677597085.
+Recall:
+ 0.9998044965786901.
+Precision score:
+ 0.9772936536891298.
+f1-score:
+ 0.9884209231634249
+confusion matrix:
+ [[164874   3921]
+ [    33 168762]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.98      0.99    168795
+           1       0.98      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 60 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+----------------
 
