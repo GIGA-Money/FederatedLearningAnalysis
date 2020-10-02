@@ -74,7 +74,7 @@ def create_scalar(x_opt, x_test, x_train):
 
 
 # %%
-def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
+def train(net, x_train, x_opt, batch_size, epochs, learn_rate, device):
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
     batch_x, batch_y, data, outputs, train_loss = 0, 0, 0, 0, 0
@@ -83,8 +83,8 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate):
     train_plt = plt
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_x = x_train[i:i + batch_size].to(device0)
-            batch_y = x_opt[i:i + batch_size].to(device0)
+            batch_x = x_train[i:i + batch_size].to(device)
+            batch_y = x_opt[i:i + batch_size].to(device)
             data_x = batch_x[::2]
             data_y = batch_x[1::2]
             target_x = batch_y[::2]
@@ -133,10 +133,10 @@ def cal_threshold(mse, input_dim):
 
 
 # %%
-def evaluation(net, x_test, tr):
+def evaluation(net, x_test, tr, device):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-    x_test = x_test.to(device0)
+    x_test = x_test.to(device)
     x_test = x_test.send(eval_hook)
     net.eval()
     net.send(x_test.location)
@@ -151,9 +151,9 @@ def evaluation(net, x_test, tr):
 
 
 # %%
-def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
+def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr, device):
     print(f"Calculated threshold is {tr}")
-    model = AnomalyModel(net, tr, scalar)
+    model = AnomalyModel(net, tr, scalar, device)
     # %% pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
     df_benign["malicious"] = 0
@@ -235,13 +235,16 @@ class Net(nn.Module):
 
 # %%
 class AnomalyModel:
-    def __init__(self, model, threshold, scaler):
+    def __init__(self, model, threshold, scaler, device):
         self.model = model
         self.threshold = threshold
         self.scaler = scaler
+        self.devicer = device
 
     def predict(self, x):
-        x = x.to(device0)
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        x = x.to(self.device)
         x = x.send(tester_hook)
         self.model = self.model.get()
         self.model.send(x.location)
@@ -270,13 +273,14 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     if torch.cuda.is_available():
-        device0 = torch.device(f"cuda:{FLAGS.Cuda}")
-        print(f"Running on the GPU: {device0}")
+        device = torch.device(f"cuda:{FLAGS.Cuda}")
+        print(f"Running on the GPU: {device}")
     else:
-        device0 = torch.device("cpu")
+        device = torch.device("cpu")
         # device1 = torch.device("cpu")
         # device2 = torch.device("cpu")
-        print(f"Running on the CPU: {device0}, \n(gpu not installed right, hardware or environment check?)")
+        print(f"Running on the CPU: {device}, "
+              f"\n(gpu not installed right, hardware or environment check?)")
 
     matplotlib.use("pdf")
     plt.grid()
@@ -286,7 +290,7 @@ def main(argv):
 
     # %%
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to(device0)
+    net = Net(input_dim).to(device)
     # %%
     training_data, input_dim, features = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(
@@ -303,22 +307,24 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float().to(device0),
-                x_opt=torch.from_numpy(x_opt).float().to(device0),
+                x_train=torch.from_numpy(x_train).float().to(device),
+                x_opt=torch.from_numpy(x_opt).float().to(device),
                 batch_size=batch_size,
                 epochs=epochs,
-                learn_rate=learn_rate)
+                learn_rate=learn_rate,
+                device=device)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
     print(tr)
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(),
-               tr=tr)
+               tr=tr,
+               device=device)
 
     print(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
                    scalar=scalar, x_trainer=x_trainer, x_tester=x_tester,
-                   tr=tr, df_malicious=load_mal_data(), features=features)
+                   tr=tr, df_malicious=load_mal_data(), features=features, device=device)
 
     os._exit(0)
 

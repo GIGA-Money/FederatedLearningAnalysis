@@ -67,7 +67,7 @@ def create_scalar(x_opt, x_test, x_train):
 
 
 # %%
-def train(net, x_train, batch_size, epochs, learn_rate):
+def train(net, x_train, batch_size, epochs, learn_rate, device):
     outputs = 0
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
@@ -112,7 +112,7 @@ def cal_threshold(mse, input_dim):
 
 
 # %%
-def evaluation(net, x_test, tr):
+def evaluation(net, x_test, tr, device):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     x_test = x_test.to(device)
@@ -211,15 +211,16 @@ class Net(nn.Module):
 
 # %%
 class AnomalyModel:
-    def __init__(self, model, threshold, scaler):
+    def __init__(self, model, threshold, scaler, device):
         self.model = model
         self.threshold = threshold
         self.scaler = scaler
+        self.device = device
 
     def predict(self, x):
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        x = x.to(device)
+        x = x.to(self.device)
         x_pred = self.model(x)
         mse = np.mean(np.power(x.cpu().data.numpy() - x_pred.cpu().data.numpy(), 2), axis=1)
         y_pred = mse > self.threshold
@@ -274,22 +275,24 @@ def main(argv):
     epochs = FLAGS.Epochs
     learn_rate = FLAGS.Learn_rate
     # %%
-    mse = train(net,
-                torch.from_numpy(x_train).float(),
-                batch_size,
-                epochs,
-                learn_rate=learn_rate)
+    mse = train(net=net,
+                x_train=torch.from_numpy(x_train).float(),
+                batch_size=batch_size,
+                epochs=epochs,
+                learn_rate=learn_rate,
+                device=device)
     tr = cal_threshold(mse=mse, input_dim=input_dim)
     print(tr)
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(),
-               tr=tr)
+               tr=tr,
+               device=device)
     # -----------------------------
     print(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
                    scalar=scalar, x_trainer=x_trainer, x_tester=x_tester,
-                   tr=tr, df_malicious=load_mal_data(), features=features)
+                   tr=tr, df_malicious=load_mal_data(), features=features, device=device)
     os._exit(0)
 
 

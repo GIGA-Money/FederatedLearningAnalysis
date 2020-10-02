@@ -73,7 +73,7 @@ def create_scalar(x_opt, x_test, x_train):
 
 
 # %%
-def train(net, x_train, batch_size, epochs, learn_rate):
+def train(net, x_train, batch_size, epochs, learn_rate, device):
     optimizer = optim.SGD(net.parameters(), lr=learn_rate)
     loss_function = nn.MSELoss()
     train_loss, batch_x, outputs = 0, 0, 0
@@ -82,7 +82,7 @@ def train(net, x_train, batch_size, epochs, learn_rate):
     train_plt = plt
     for epoch in range(epochs):
         for i in tqdm(range(0, len(x_train), batch_size)):
-            batch_x = x_train[i:i + batch_size].to(device0)
+            batch_x = x_train[i:i + batch_size].to(device)
             batch_x = batch_x.send('v')
             net.send(batch_x.location)
             opt = optims.get_optim(batch_x.location.id)
@@ -122,10 +122,10 @@ def cal_threshold(mse, input_dim):
 
 
 # %%
-def evaluation(net, x_test, tr):
+def evaluation(net, x_test, tr, device):
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-    x_test = x_test.to(device0)
+    x_test = x_test.to(device)
     x_test = x_test.send(eval_hook)
     net.eval()
     net.send(x_test.location)
@@ -140,9 +140,9 @@ def evaluation(net, x_test, tr):
 
 
 # %%
-def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
+def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr, device):
     print(f"Calculated threshold is {tr} for testing with data")
-    model = AnomalyModel(net, tr, scalar)
+    model = AnomalyModel(net, tr, scalar, device)
     #   pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
     df_benign["malicious"] = 0
@@ -224,13 +224,16 @@ class Net(nn.Module):
 
 # %%
 class AnomalyModel:
-    def __init__(self, model, threshold, scaler):
+    def __init__(self, model, threshold, scaler, device):
         self.model = model
         self.threshold = threshold
         self.scaler = scaler
+        self.device = device
 
     def predict(self, x):
-        x = x.to(device0)
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        x = x.to(self.device)
         x = x.send(tester_hook)
         self.model = self.model.get()
         self.model.send(x.location)
