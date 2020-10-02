@@ -28,7 +28,7 @@ flags.DEFINE_integer("Epochs", 5, "The number of rounds of training")
 flags.DEFINE_float("Learn_rate", 0.01, "The rate of learning by the optimizer")
 flags.DEFINE_integer("Input_dim", 10, "the input dimension, used from getting the train data")
 flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "the current directory")
-flags.DEFINE_string("Cuda", '0', "This will allow for gpu selection, "
+flags.DEFINE_string("Cuda", 'cuda:1', "This will allow for gpu selection, "
                                  "Cuda will auto off if not available, 0 is your first gpu")
 FLAGS = flags.FLAGS
 hook = sy.TorchHook(torch)
@@ -261,11 +261,14 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}")
     if torch.cuda.is_available():
-        device0 = torch.device(f"cuda:{FLAGS.cuda}")
+        device0 = torch.device(f"{FLAGS.Cuda}")
         print(f"Running on the GPU: {device0}")
     else:
         device0 = torch.device("cpu")
-        print(f"Running on the CPU: {torch.device('cpu')}")
+        # device1 = torch.device("cpu")
+        # device2 = torch.device("cpu")
+        print(f"Running on the CPU: {device0}, "
+              f"\n(gpu not installed right, hardware or environment check?)")
 
     matplotlib.use("pdf")
     plt.grid()
