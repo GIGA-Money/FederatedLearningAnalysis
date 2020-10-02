@@ -31,7 +31,6 @@ flags.DEFINE_string("Cuda", '0', "This will allow for gpu selection, "
 FLAGS = flags.FLAGS
 
 
-
 # %%
 def get_train_data(top_n_features=115):
     print("Loading combined training data...")
@@ -127,9 +126,9 @@ def evaluation(net, x_test, tr, device):
 
 
 # %%
-def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr):
+def test_with_data(net, df_malicious, scalar, x_trainer, x_tester, df, features, tr, device):
     print(f"Calculated threshold is {tr}")
-    model = AnomalyModel(net, tr, scalar)
+    model = AnomalyModel(net, tr, scalar, device)
     # %% pandas data grabbing
     df_benign = pd.DataFrame(x_tester, columns=df.columns)
     df_benign["malicious"] = 0
@@ -244,6 +243,7 @@ def main(argv):
                              f"got: {argv}.")
     if torch.cuda.is_available():
         device = torch.device(f"cuda:{FLAGS.Cuda}")
+        torch.cuda.set_device(device)
         print(f"Running on the GPU: {device}")
     else:
         device = torch.device("cpu")
@@ -258,7 +258,7 @@ def main(argv):
 
     # %%
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to(device)
+    net = Net(input_dim).to(device).cuda()
 
     # %%
     print(f"Training--------------------")
@@ -276,7 +276,7 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float(),
+                x_train=torch.from_numpy(x_train).float().cuda(),
                 batch_size=batch_size,
                 epochs=epochs,
                 learn_rate=learn_rate,
@@ -285,7 +285,7 @@ def main(argv):
     print(tr)
     # %%
     evaluation(net,
-               torch.from_numpy(x_test).float(),
+               torch.from_numpy(x_test).float().cuda(),
                tr=tr,
                device=device)
     # -----------------------------

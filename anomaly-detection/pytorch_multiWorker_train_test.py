@@ -239,7 +239,7 @@ class AnomalyModel:
         self.model = model
         self.threshold = threshold
         self.scaler = scaler
-        self.devicer = device
+        self.device = device
 
     def predict(self, x):
         if torch.cuda.is_available():
