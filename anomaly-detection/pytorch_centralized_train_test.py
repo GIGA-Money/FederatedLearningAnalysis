@@ -29,7 +29,7 @@ flags.DEFINE_string("Current_dir", os.path.dirname(os.path.abspath(__file__)), "
 flags.DEFINE_string("Cuda", '0', "This will allow for gpu selection, "
                                  "Cuda will auto off if not available, 0 is your first gpu")
 FLAGS = flags.FLAGS
-device = torch.device("cpu")
+device = 0
 
 
 # %%

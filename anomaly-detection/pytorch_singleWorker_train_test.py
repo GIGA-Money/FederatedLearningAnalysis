@@ -36,7 +36,7 @@ v_hook = sy.VirtualWorker(hook=hook, id="v")
 eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ['v', 'eval', 'testing']
-device0 = torch.device("cpu")
+device0 = 0
 
 
 # %%

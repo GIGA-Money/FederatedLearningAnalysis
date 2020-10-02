@@ -37,7 +37,7 @@ x_hook = sy.VirtualWorker(hook=hook, id="x_hook")
 eval_hook = sy.VirtualWorker(hook=hook, id="eval")
 tester_hook = sy.VirtualWorker(hook=hook, id="testing")
 workers = ["v_hook", "x_hook", "eval", "testing"]
-device0 = "cpu"
+device0 = 0
 
 # %%
 def get_train_data(top_n_features=10):
