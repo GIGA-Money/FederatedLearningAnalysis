@@ -306,12 +306,13 @@ def main(argv):
     # %%
     evaluation(net,
                torch.from_numpy(x_test).float(),
-               tr=tr)
+               tr=tr,
+               device=device0)
     # -----------------------------
     print(f"Testing--------------------")
     test_with_data(net=net, df=training_data,
                    scalar=scalar, x_trainer=x_trainer, x_tester=x_tester,
-                   tr=tr, df_malicious=load_mal_data(), features=features)
+                   tr=tr, df_malicious=load_mal_data(), features=features, device=device0)
     os._exit(0)
 
 

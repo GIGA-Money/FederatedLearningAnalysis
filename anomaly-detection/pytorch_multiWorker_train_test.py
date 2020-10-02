@@ -274,6 +274,7 @@ def main(argv):
                              f"got: {argv}")
     if torch.cuda.is_available():
         device = torch.device(f"cuda:{FLAGS.Cuda}")
+        torch.cuda.set_device(device)
         print(f"Running on the GPU: {device}")
     else:
         device = torch.device("cpu")
@@ -290,7 +291,7 @@ def main(argv):
 
     # %%
     input_dim = FLAGS.Input_dim
-    net = Net(input_dim).to(device)
+    net = Net(input_dim).to(device).cuda()
     # %%
     training_data, input_dim, features = get_train_data(input_dim)
     x_train, x_opt, x_test = np.split(
@@ -307,8 +308,8 @@ def main(argv):
     learn_rate = FLAGS.Learn_rate
     # %%
     mse = train(net=net,
-                x_train=torch.from_numpy(x_train).float().to(device),
-                x_opt=torch.from_numpy(x_opt).float().to(device),
+                x_train=torch.from_numpy(x_train).float().to(device).cuda(),
+                x_opt=torch.from_numpy(x_opt).float().to(device).cuda(),
                 batch_size=batch_size,
                 epochs=epochs,
                 learn_rate=learn_rate,
