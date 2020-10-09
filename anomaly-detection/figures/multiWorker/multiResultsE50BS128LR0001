@@ -512,7 +512,143 @@ weighted avg       0.88      0.86      0.86    337590
 
 Hyper Params: Input Dim: 50 Learn Rate:0.001 Epochs: 50 Batch Size: 128
 -------------------
+Epoch: 49. Loss 1: 0.43286
+mean is 0.43286
+min is 0.01271
+max is 12.16556
+std is 1.83893
+Calculated threshold is 2.2717974185943604
+2.2717974
+Calculating MSE on test set...
+3223 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.2717974185943604
+Accuracy:
+ 0.8602120915903907.
+Recall:
+ 0.7395183506620456.
+Precision score:
+ 0.9748301444748145.
+f1-score:
+ 0.8410247772406475
+confusion matrix:
+ [[165572   3223]
+ [ 43968 124827]].
+classification report:
+               precision    recall  f1-score   support
 
+           0       0.79      0.98      0.88    168795
+           1       0.97      0.74      0.84    168795
+
+    accuracy                           0.86    337590
+   macro avg       0.88      0.86      0.86    337590
+weighted avg       0.88      0.86      0.86    337590
+
+Hyper Params: Input Dim: 51 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+-------------------
+Epoch: 49. Loss 1: 0.43352
+mean is 0.43352
+min is 0.01214
+max is 12.19855
+std is 1.84255
+Calculated threshold is 2.276071548461914
+2.2760715
+Calculating MSE on test set...
+3262 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.276071548461914
+Accuracy:
+ 0.8600965668414349.
+Recall:
+ 0.7395183506620456.
+Precision score:
+ 0.9745333322923905.
+f1-score:
+ 0.8409142964929064
+confusion matrix:
+ [[165533   3262]
+ [ 43968 124827]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.79      0.98      0.88    168795
+           1       0.97      0.74      0.84    168795
+
+    accuracy                           0.86    337590
+   macro avg       0.88      0.86      0.86    337590
+weighted avg       0.88      0.86      0.86    337590
+
+Hyper Params: Input Dim: 52 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+-------------------
+Epoch: 49. Loss 1: 0.42892
+mean is 0.42892
+min is 0.01216
+max is 12.47859
+std is 1.87758
+Calculated threshold is 2.3065013885498047
+2.3065014
+Calculating MSE on test set...
+3548 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.3065013885498047
+Accuracy:
+ 0.9893569122308126.
+Recall:
+ 0.9997334044254865.
+Precision score:
+ 0.9794077702585056.
+f1-score:
+ 0.9894662159586974
+confusion matrix:
+ [[165247   3548]
+ [    45 168750]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.98      0.99    168795
+           1       0.98      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 53 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+-------------------
+Epoch: 49. Loss 1: 0.41465
+mean is 0.41465
+min is 0.01207
+max is 11.68309
+std is 1.76452
+Calculated threshold is 2.17917537689209
+2.1791754
+Calculating MSE on test set...
+3702 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.17917537689209
+Accuracy:
+ 0.9889333214846411.
+Recall:
+ 0.9997985722325898.
+Precision score:
+ 0.9785345262462093.
+f1-score:
+ 0.9890522713020647
+confusion matrix:
+ [[165093   3702]
+ [    34 168761]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.98      0.99    168795
+           1       0.98      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 54 Learn Rate:0.001 Epochs: 50 Batch Size: 128
+
+-------------------
 Epoch: 49. Loss 1: 0.43681
 mean is 0.43681
 min is 0.01157
