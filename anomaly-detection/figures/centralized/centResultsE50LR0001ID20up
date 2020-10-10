@@ -617,7 +617,6 @@ classification report:
 weighted avg       0.99      0.99      0.99    337590
 
 Hyper Params: Input Dim: 54. Learn Rate:0.001. Epochs: 50. Batch Size: 128
-
 ---------------
 Epoch: 49. Train_Loss: 0.35161.
 mean is 0.35161
@@ -652,6 +651,143 @@ classification report:
 weighted avg       0.99      0.99      0.99    337590
 
 Hyper Params: Input Dim: 55. Learn Rate:0.001. Epochs: 50. Batch Size: 128
+--------------
+Epoch: 49. Train_Loss: 0.34651.
+mean is 0.34651
+min is 0.01284
+max is 16.55785
+std is 1.75765
+Calculated threshold is 2.10416
+2.1041608
+Calculating MSE on test set...
+4407 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.104160785675049
+Accuracy:
+ 0.98686
+Recall:
+ 0.99982
+Precision score:
+ 0.97455
+f1-score:
+ 0.98703
+confusion matrix:
+ [[164388   4407]
+ [    30 168765]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.97      0.99    168795
+           1       0.97      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 56. Learn Rate:0.001. Epochs: 50. Batch Size: 128
+--------------
+Epoch: 49. Train_Loss: 0.33984.
+mean is 0.33984
+min is 0.01281
+max is 16.21837
+std is 1.72230
+Calculated threshold is 2.06214
+2.0621393
+Calculating MSE on test set...
+4383 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.0621392726898193
+Accuracy:
+ 0.98693
+Recall:
+ 0.99983
+Precision score:
+ 0.97469
+f1-score:
+ 0.98710
+confusion matrix:
+ [[164412   4383]
+ [    28 168767]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.97      0.99    168795
+           1       0.97      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 57. Learn Rate:0.001. Epochs: 50. Batch Size: 128
+--------------
+Epoch: 49. Train_Loss: 0.33015.
+mean is 0.33015
+min is 0.01128
+max is 15.56589
+std is 1.65423
+Calculated threshold is 1.98438
+1.9843845
+Calculating MSE on test set...
+4402 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 1.984384536743164
+Accuracy:
+ 0.98688
+Recall:
+ 0.99985
+Precision score:
+ 0.97458
+f1-score:
+ 0.98705
+confusion matrix:
+ [[164393   4402]
+ [    26 168769]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.97      0.99    168795
+           1       0.97      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 58. Learn Rate:0.001. Epochs: 50. Batch Size: 128
+--------------
+Epoch: 49. Train_Loss: 0.34585.
+mean is 0.34585
+min is 0.01450
+max is 16.04679
+std is 1.70249
+Calculated threshold is 2.04834
+2.0483375
+Calculating MSE on test set...
+4485 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.048337459564209
+Accuracy:
+ 0.98664
+Recall:
+ 0.99985
+Precision score:
+ 0.97411
+f1-score:
+ 0.98681
+confusion matrix:
+ [[164310   4485]
+ [    26 168769]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       1.00      0.97      0.99    168795
+           1       0.97      1.00      0.99    168795
+
+    accuracy                           0.99    337590
+   macro avg       0.99      0.99      0.99    337590
+weighted avg       0.99      0.99      0.99    337590
+
+Hyper Params: Input Dim: 59. Learn Rate:0.001. Epochs: 50. Batch Size: 128
+
 --------------
 Epoch: 49. Train_Loss: 0.34734.
 mean is 0.34734
