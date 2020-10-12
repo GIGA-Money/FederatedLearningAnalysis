@@ -136,13 +136,16 @@ def accuracy_plt_multi(plt):
     acc.title(f"{title} for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
-    xlista = xList
-    ylista = centAcc
-    ylistmulti= multiAcc
-    acc.plot(xlista, ylista, label="Centralized")
-    acc.plot(xlista, ylistmulti, label="Multi Worker")
+    half = len(xList) >> 1
+    xlista = xList[half:]
+    ylista = centAcc[half:]
+    ylistmulti = multiAcc[half:]
+    #acc.plot(xlista, ylista, label="Centralized")
+    #acc.plot(xlista, ylistmulti, label="Multi Worker")
+    acc.scatter(xlista, ylista, c="orange", label="Centralized")
+    acc.scatter(xlista, ylistmulti, c="cornflowerblue", label="Multi Worker")
     acc.legend(loc="best")
-    acc.savefig(f"comparison_acc_e50_lr001_bs128.png")
+    acc.savefig(f"comparison_scatter_acc_e50_lr001_bs128.png")
     print("cent accuracy")
 
 
@@ -157,10 +160,12 @@ def precision_plt_multi(plt):
     xlistp = xList
     ylistp = centPrecision
     ylistmulti = multiPrecision
-    precision.plot(xlistp,  ylistp, label="Centralized")
-    precision.plot(xlistp, ylistmulti, label="Multi Worker")
+    #precision.plot(xlistp,  ylistp, label="Centralized")
+    #precision.plot(xlistp, ylistmulti, label="Multi Worker")
+    precision.scatter(xlistp, ylistp, c="orange", label="Centralized")
+    precision.scatter(xlistp, ylistmulti, c="cornflowerblue", label="Multi Worker")
     precision.legend(loc="best")
-    precision.savefig(f"comparison_precision_e50_lr0001_bs128.png")
+    precision.savefig(f"comparison_scatter_precision_e50_lr0001_bs128.png")
     print("multi precision")
 
 
@@ -169,17 +174,19 @@ def recall_plt_multi(plt):
     title = "Recall"
     recall = plt
     recall.style.use("ggplot")
-    recall.grid()
     recall.title(f"{title} for different number of features")
     recall.xlabel("Epochs")
     recall.ylabel(f"{title}")
-    xlistr = xList
-    ylistr = centRecall
-    ylistmulti = multiRecall
-    recall.plot(xlistr, ylistr, label="Centralized")
-    recall.plot(xlistr, ylistmulti, label="Multi Worker")
+    half = len(xList) >> 1
+    xlistr = xList[half:]
+    ylistr = centRecall[half:]
+    ylistmulti = multiRecall[half:]
+    #recall.plot(xlistr, ylistr, label="Centralized")
+    #recall.plot(xlistr, ylistmulti, label="Multi Worker")
+    recall.scatter(xlistr, ylistr, c="orange", label="Centralized")
+    recall.scatter(xlistr, ylistmulti, c="cornflowerblue", label="Multi Worker")
     recall.legend(loc="best")
-    recall.savefig(f"comparison_recall_e50_lr0001_bs128.png")
+    recall.savefig(f"comparison_scatter_recall_e50_lr0001_bs128.png")
     print("Multi recall")
 
 
@@ -191,13 +198,16 @@ def f1_plt_multi(plt):
     f1.title(f"{title} for different number of features")
     f1.xlabel("Epochs")
     f1.ylabel(f"{title}")
-    xlistf = xList
-    ylistf = centF1
-    ylistmulti = multiF1
-    f1.plot(xlistf, ylistf, label="Centralized")
-    f1.plot(xlistf, ylistmulti, label="Multi Worker")
+    half = len(xList) >> 1
+    xlistf = xList[half:]
+    ylistf = centF1[half:]
+    ylistmulti = multiF1[half:]
+    #f1.plot(xlistf, ylistf, label="Centralized")
+    #f1.plot(xlistf, ylistmulti, label="Multi Worker")
+    f1.scatter(xlistf, ylistf, c="orange", label="Centralized")
+    f1.scatter(xlistf, ylistmulti, c="cornflowerblue", label="Multi Worker")
     f1.legend(loc="best")
-    f1.savefig(f"comparison_f1_e50_lr0001_bs128.png")
+    f1.savefig(f"comparison_scatter_f1_e50_lr0001_bs128.png")
     print("Multi F-measure")
 
 
@@ -218,6 +228,7 @@ def f1_plt_multi(plt):
 
 # %%
 def pandas_dataframe_print(plt):
+    plt.style.use("ggplot")
     fig, ax = plt.subplots()
 
     # hide axes
@@ -226,10 +237,10 @@ def pandas_dataframe_print(plt):
     ax.axis('tight')
 
     df = pd.DataFrame([multiAcc, centAcc])
-    colLabel = ("mutli worker Accuracy", "centralized Accuracy")
-    ax.table(cellText=df.values, loc='center')
+    rowLabel = ("mutli worker Accuracy", "centralized Accuracy")
+    ax.table(cellText=df.values, cellLoc='center', colLabels=xList, rowLabels=rowLabel, loc='center')
     fig.tight_layout()
-    plt.savefig(f"mutli_worker_acc_e50_lr001_bs128_table.png")
+    plt.savefig(f"data_acc_e50_lr001_bs128_table.pdf")
 
 
 # %%
@@ -238,17 +249,18 @@ def main(argv):
         raise app.UsageError("Expected one command-line argument(s), "
                              f"got: {argv}.")
     plt.style.use("ggplot")
-    matplotlib.use("pdf")
-    accuracy_plt_multi(plt)
-    #f1_plt_multi(plt)
-    #recall_plt_multi(plt)
-    # precision_plt_multi(plt)
 
+    matplotlib.use("pdf")
+    #accuracy_plt_multi(plt)
+    f1_plt_multi(plt)
+    #recall_plt_multi(plt)
+    #precision_plt_multi(plt)
+    #pandas_dataframe_print(plt)
 
     # f1_plt(plt)
     # precision_plt(plt)
     # recall_plt(plt)
-    # pandas_dataframe_print(plt)
+
     os._exit(0)
 
 
