@@ -92,6 +92,7 @@ def precision_plt(plt):
     xlistp = xList
     ylistp = centPrecision
     precision.plot(xlistp, ylistp)
+    precision.legend(loc="lower right", framealpha=1.0, facecolor='white')
     precision.savefig(f"cent_precision_e50_lr0001_bs128.png")
     print("cent precision")
 
@@ -108,6 +109,7 @@ def recall_plt(plt):
     xlistr = xList
     ylistr = centRecall
     recall.plot(xlistr, ylistr)
+    recall.legend(loc="lower right", framealpha=1.0, facecolor='white')
     recall.savefig(f"cent_recall_e50_lr0001_bs128.png")
     print("cent recall")
 
@@ -124,6 +126,7 @@ def f1_plt(plt):
     xlistf = xList
     ylistf = centF1
     f1.plot(xList, multiF1)
+    f1.legend(loc="lower right", framealpha=1.0, facecolor='white')
     f1.savefig(f"cent_f1_e50_lr0001_bs128.png")
     print("cent F-measure")
 
@@ -133,7 +136,7 @@ def accuracy_plt_multi(plt):
     plt.style.use("ggplot")
     title = "Accuracy"
     acc = plt
-    acc.title(f"{title} for different number of features")
+    acc.title("")#(f"{title}")# for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
     half = len(xList) >> 1
@@ -144,7 +147,7 @@ def accuracy_plt_multi(plt):
     #acc.plot(xlista, ylistmulti, label="Multi Worker")
     acc.scatter(xlista, ylista, c="orange", label="Centralized")
     acc.scatter(xlista, ylistmulti, c="cornflowerblue", label="Multi Worker")
-    acc.legend(loc="best")
+    acc.legend(loc="lower right", framealpha=1.0, facecolor='white')
     acc.savefig(f"comparison_scatter_acc_e50_lr001_bs128.png")
     print("cent accuracy")
 
@@ -154,7 +157,7 @@ def precision_plt_multi(plt):
     title = "Precision"
     precision = plt
     precision.style.use("ggplot")
-    precision.title(f"{title} for different number of features")
+    precision.title("")#(f"{title}")# for different number of features")
     precision.xlabel("Input Dimension")
     precision.ylabel(f"{title}")
     xlistp = xList
@@ -164,7 +167,7 @@ def precision_plt_multi(plt):
     #precision.plot(xlistp, ylistmulti, label="Multi Worker")
     precision.scatter(xlistp, ylistp, c="orange", label="Centralized")
     precision.scatter(xlistp, ylistmulti, c="cornflowerblue", label="Multi Worker")
-    precision.legend(loc="best")
+    precision.legend(loc="lower right", framealpha=1.0, facecolor='white')
     precision.savefig(f"comparison_scatter_precision_e50_lr0001_bs128.png")
     print("multi precision")
 
@@ -174,8 +177,8 @@ def recall_plt_multi(plt):
     title = "Recall"
     recall = plt
     recall.style.use("ggplot")
-    recall.title(f"{title} for different number of features")
-    recall.xlabel("Epochs")
+    recall.title("")#(f"{title}")# for different number of features")
+    recall.xlabel("Input Dimensions")
     recall.ylabel(f"{title}")
     half = len(xList) >> 1
     xlistr = xList[half:]
@@ -185,7 +188,7 @@ def recall_plt_multi(plt):
     #recall.plot(xlistr, ylistmulti, label="Multi Worker")
     recall.scatter(xlistr, ylistr, c="orange", label="Centralized")
     recall.scatter(xlistr, ylistmulti, c="cornflowerblue", label="Multi Worker")
-    recall.legend(loc="best")
+    recall.legend(loc="lower right", framealpha=1.0, facecolor='white')
     recall.savefig(f"comparison_scatter_recall_e50_lr0001_bs128.png")
     print("Multi recall")
 
@@ -195,8 +198,8 @@ def f1_plt_multi(plt):
     title = "F-Measure"
     f1 = plt
     f1.style.use("ggplot")
-    f1.title(f"{title} for different number of features")
-    f1.xlabel("Epochs")
+    f1.title("")#f"{title}")# per number of features")
+    f1.xlabel("Input Dimnesions")
     f1.ylabel(f"{title}")
     half = len(xList) >> 1
     xlistf = xList[half:]
@@ -206,7 +209,7 @@ def f1_plt_multi(plt):
     #f1.plot(xlistf, ylistmulti, label="Multi Worker")
     f1.scatter(xlistf, ylistf, c="orange", label="Centralized")
     f1.scatter(xlistf, ylistmulti, c="cornflowerblue", label="Multi Worker")
-    f1.legend(loc="best")
+    f1.legend(loc="lower right", framealpha=1.0, facecolor='white')
     f1.savefig(f"comparison_scatter_f1_e50_lr0001_bs128.png")
     print("Multi F-measure")
 
@@ -252,8 +255,8 @@ def main(argv):
 
     matplotlib.use("pdf")
     #accuracy_plt_multi(plt)
-    f1_plt_multi(plt)
-    #recall_plt_multi(plt)
+    #f1_plt_multi(plt)
+    recall_plt_multi(plt)
     #precision_plt_multi(plt)
     #pandas_dataframe_print(plt)
 
