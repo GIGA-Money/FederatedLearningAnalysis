@@ -4,7 +4,6 @@ import os
 
 from absl import app
 from absl import flags
-# import logging
 import lime
 import lime.lime_tabular
 import matplotlib
@@ -121,10 +120,10 @@ def train(net, x_train, x_opt, batch_size, epochs, learn_rate, device):
 
 # %%
 def cal_threshold(mse, input_dim):
-    print("mean is %.5f" % mse.mean())
-    print("min is %.5f" % mse.min())
-    print("max is %.5f" % mse.max())
-    print("std is %.5f" % mse.std())
+    print(f"mean is {mse.mean():.5f}")
+    print(f"min is {mse.min():.5f}")
+    print(f"max is {mse.max():.5f}")
+    print(f"std is {mse.std():.5f}")
     tr = mse.mean() + mse.std()
     # with open(f"threshold_multiworker/threshold_federated_{input_dim}_{FLAGS.Learn_rate}.txt", 'w') as t:
     #    t.write(str(tr))
@@ -285,9 +284,6 @@ def main(argv):
 
     matplotlib.use("pdf")
     plt.grid()
-    # logging.basicConfig(
-    #    filename="multiWorker_log.log",
-    #    level=print)
 
     # %%
     input_dim = FLAGS.Input_dim
