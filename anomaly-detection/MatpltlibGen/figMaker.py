@@ -19,6 +19,7 @@ centRecall = [0.73956, 0.73960, 0.73959, 0.73959, 0.73952, 0.73954,
               0.99982, 0.99982, 0.99983, 0.99985, 0.99985,
               0.99983, 0.99983, 0.99983, 0.99983, 0.99980, 0.99977, 0.99981,
               0.99984, 0.99983, 0.99981, 0.99982, 0.99982]
+
 centPrecision = [0.86582, 0.90645, 0.95519, 0.96497, 0.98188, 0.98159,
                  0.97990, 0.97295, 0.97079, 0.97092, 0.97236, 0.97678, 0.97539,
                  0.97457, 0.97455, 0.97469, 0.97458, 0.97411,
@@ -40,6 +41,7 @@ multiRecall = [0.73949, 0.73957, 0.73956, 0.73954, 0.73948, 0.73949,
                0.99979, 0.99980, 0.99980, 0.99980, 0.99980,
                0.99980, 0.99979, 0.99979, 0.99978, 0.99977, 0.99972,
                0.99974, 0.99978, 0.99976, 0.99976, 0.99977, 0.99978]
+
 multiPrecision = [0.94158, 0.92723, 0.97360, 0.97769, 0.98276, 0.98290,
                   0.98294, 0.97670, 0.97482, 0.97483, 0.97453, 0.97940, 0.97853,
                   0.97897, 0.97877, 0.97915, 0.97868, 0.97888,
@@ -136,15 +138,15 @@ def accuracy_plt_multi(plt):
     plt.style.use("ggplot")
     title = "Accuracy"
     acc = plt
-    acc.title("")#(f"{title}")# for different number of features")
+    acc.title("")  # (f"{title}")# for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
     half = len(xList) >> 1
     xlista = xList[half:]
     ylista = centAcc[half:]
     ylistmulti = multiAcc[half:]
-    #acc.plot(xlista, ylista, label="Centralized")
-    #acc.plot(xlista, ylistmulti, label="Multi Worker")
+    # acc.plot(xlista, ylista, label="Centralized")
+    # acc.plot(xlista, ylistmulti, label="Multi Worker")
     acc.scatter(xlista, ylista, c="orange", label="Centralized")
     acc.scatter(xlista, ylistmulti, c="cornflowerblue", label="Multi Worker")
     acc.legend(loc="lower right", framealpha=1.0, facecolor='white')
@@ -157,14 +159,14 @@ def precision_plt_multi(plt):
     title = "Precision"
     precision = plt
     precision.style.use("ggplot")
-    precision.title("")#(f"{title}")# for different number of features")
+    precision.title("")  # (f"{title}")# for different number of features")
     precision.xlabel("Input Dimension")
     precision.ylabel(f"{title}")
     xlistp = xList
     ylistp = centPrecision
     ylistmulti = multiPrecision
-    #precision.plot(xlistp,  ylistp, label="Centralized")
-    #precision.plot(xlistp, ylistmulti, label="Multi Worker")
+    # precision.plot(xlistp,  ylistp, label="Centralized")
+    # precision.plot(xlistp, ylistmulti, label="Multi Worker")
     precision.scatter(xlistp, ylistp, c="orange", label="Centralized")
     precision.scatter(xlistp, ylistmulti, c="cornflowerblue", label="Multi Worker")
     precision.legend(loc="lower right", framealpha=1.0, facecolor='white')
@@ -177,15 +179,17 @@ def recall_plt_multi(plt):
     title = "Recall"
     recall = plt
     recall.style.use("ggplot")
-    recall.title("")#(f"{title}")# for different number of features")
+    recall.title("")  # (f"{title}")# for different number of features")
     recall.xlabel("Input Dimensions")
     recall.ylabel(f"{title}")
     half = len(xList) >> 1
     xlistr = xList[half:]
     ylistr = centRecall[half:]
     ylistmulti = multiRecall[half:]
-    #recall.plot(xlistr, ylistr, label="Centralized")
-    #recall.plot(xlistr, ylistmulti, label="Multi Worker")
+    # recall.plot(xlistr, ylistr, label="Centralized")
+    # recall.plot(xlistr, ylistmulti, label="Multi Worker")
+    # this line will shift the plot away from the left side by 0.15
+    recall.subplots_adjust(left=0.15)
     recall.scatter(xlistr, ylistr, c="orange", label="Centralized")
     recall.scatter(xlistr, ylistmulti, c="cornflowerblue", label="Multi Worker")
     recall.legend(loc="lower right", framealpha=1.0, facecolor='white')
@@ -198,15 +202,15 @@ def f1_plt_multi(plt):
     title = "F-Measure"
     f1 = plt
     f1.style.use("ggplot")
-    f1.title("")#f"{title}")# per number of features")
+    f1.title("")  # f"{title}")# per number of features")
     f1.xlabel("Input Dimnesions")
     f1.ylabel(f"{title}")
     half = len(xList) >> 1
     xlistf = xList[half:]
     ylistf = centF1[half:]
     ylistmulti = multiF1[half:]
-    #f1.plot(xlistf, ylistf, label="Centralized")
-    #f1.plot(xlistf, ylistmulti, label="Multi Worker")
+    # f1.plot(xlistf, ylistf, label="Centralized")
+    # f1.plot(xlistf, ylistmulti, label="Multi Worker")
     f1.scatter(xlistf, ylistf, c="orange", label="Centralized")
     f1.scatter(xlistf, ylistmulti, c="cornflowerblue", label="Multi Worker")
     f1.legend(loc="lower right", framealpha=1.0, facecolor='white')
@@ -228,6 +232,7 @@ def f1_plt_multi(plt):
     acc.plot(xlista, ylista)
     acc.savefig(f"mutli_worker_acc_e50_lr001_bs128.png")
     print("Multi accuracy")'''
+
 
 # %%
 def pandas_dataframe_print(plt):
@@ -254,11 +259,11 @@ def main(argv):
     plt.style.use("ggplot")
 
     matplotlib.use("pdf")
-    #accuracy_plt_multi(plt)
-    #f1_plt_multi(plt)
+    # accuracy_plt_multi(plt)
+    # f1_plt_multi(plt)
     recall_plt_multi(plt)
-    #precision_plt_multi(plt)
-    #pandas_dataframe_print(plt)
+    # precision_plt_multi(plt)
+    # pandas_dataframe_print(plt)
 
     # f1_plt(plt)
     # precision_plt(plt)
