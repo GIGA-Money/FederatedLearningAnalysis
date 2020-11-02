@@ -1,0 +1,181 @@
+
+Epoch: 48. Loss 1: 1.22821
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 2638/2638 [05:36<00:00,  7.85it/s]
+Epoch: 49. Loss 1: 1.22821
+mean is 1.22821
+min is 0.22233
+max is 5.12901
+std is 1.49825
+Calculated threshold is 2.726459503173828
+2.7264595
+Calculating MSE on test set...
+7267 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.726459503173828
+Accuracy:
+ 0.8481856690067834.
+Recall:
+ 0.7394235611244409.
+Precision score:
+ 0.9449794818213479.
+f1-score:
+ 0.8296590255689277
+confusion matrix:
+ [[161528   7267]
+ [ 43984 124811]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.79      0.96      0.86    168795
+           1       0.94      0.74      0.83    168795
+
+    accuracy                           0.85    337590
+   macro avg       0.87      0.85      0.85    337590
+weighted avg       0.87      0.85      0.85    337590
+
+Hyper Params: Input Dim: 6 Learn Rate:0.1 Epochs: 50 Batch Size: 64
+----------------
+Epoch: 48. Loss 1: 1.08798
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 2638/2638 [05:36<00:00,  7.83it/s]
+Epoch: 49. Loss 1: 1.08798
+mean is 1.08798
+min is 0.20237
+max is 4.43141
+std is 1.30770
+Calculated threshold is 2.395679235458374
+2.3956792
+Calculating MSE on test set...
+8811 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.395679235458374
+Accuracy:
+ 0.8436328090287034.
+Recall:
+ 0.7394650315471429.
+Precision score:
+ 0.9340637137148373.
+f1-score:
+ 0.8254503610824536
+confusion matrix:
+ [[159984   8811]
+ [ 43977 124818]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.78      0.95      0.86    168795
+           1       0.93      0.74      0.83    168795
+
+    accuracy                           0.84    337590
+   macro avg       0.86      0.84      0.84    337590
+weighted avg       0.86      0.84      0.84    337590
+
+Hyper Params: Input Dim: 7 Learn Rate:0.1 Epochs: 50 Batch Size: 64
+-----------------
+
+Epoch: 48. Loss 1: 0.97960
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 2638/2638 [05:34<00:00,  7.87it/s]
+Epoch: 49. Loss 1: 0.97960
+mean is 0.97960
+min is 0.18799
+max is 3.89390
+std is 1.16028
+Calculated threshold is 2.1398818492889404
+2.1398818
+Calculating MSE on test set...
+10018 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.1398818492889404
+Accuracy:
+ 0.8400752391954738.
+Recall:
+ 0.7395005776237448.
+Precision score:
+ 0.9257056406757539.
+f1-score:
+ 0.8221922888185563
+confusion matrix:
+ [[158777  10018]
+ [ 43971 124824]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.78      0.94      0.85    168795
+           1       0.93      0.74      0.82    168795
+
+    accuracy                           0.84    337590
+   macro avg       0.85      0.84      0.84    337590
+weighted avg       0.85      0.84      0.84    337590
+
+Hyper Params: Input Dim: 8 Learn Rate:0.1 Epochs: 50 Batch Size: 64
+------------------
+
+Epoch: 48. Loss 1: 0.35285
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 2638/2638 [05:46<00:00,  7.61it/s]
+Epoch: 49. Loss 1: 0.35484
+mean is 0.35484
+min is 0.01122
+max is 3.02996
+std is 0.78968
+Calculated threshold is 1.1445223093032837
+1.1445223
+Calculating MSE on test set...
+6391 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 1.1445223093032837
+Accuracy:
+ 0.8508279273675168.
+Recall:
+ 0.7395183506620456.
+Precision score:
+ 0.9512947918730662.
+f1-score:
+ 0.832143940429248
+confusion matrix:
+ [[162404   6391]
+ [ 43968 124827]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.79      0.96      0.87    168795
+           1       0.95      0.74      0.83    168795
+
+    accuracy                           0.85    337590
+   macro avg       0.87      0.85      0.85    337590
+weighted avg       0.87      0.85      0.85    337590
+
+Hyper Params: Input Dim: 9 Learn Rate:0.1 Epochs: 50 Batch Size: 64
+------------------
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 2638/2638 [06:06<00:00,  7.21it/s]
+Epoch: 49. Loss 1: 1.04783
+mean is 1.04783
+min is 0.17313
+max is 4.16045
+std is 1.23896
+Calculated threshold is 2.286789655685425
+2.2867897
+Calculating MSE on test set...
+12163 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 2.286789655685425
+Accuracy:
+ 0.8337273023490033.
+Recall:
+ 0.7395124263159454.
+Precision score:
+ 0.9112118491265722.
+f1-score:
+ 0.8164325144546477
+confusion matrix:
+ [[156632  12163]
+ [ 43969 124826]].
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.78      0.93      0.85    168795
+           1       0.91      0.74      0.82    168795
+
+    accuracy                           0.83    337590
+   macro avg       0.85      0.83      0.83    337590
+weighted avg       0.85      0.83      0.83    337590
+
+Hyper Params: Input Dim: 10 Learn Rate:0.1 Epochs: 50 Batch Size: 64

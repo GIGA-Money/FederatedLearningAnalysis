@@ -1,0 +1,75 @@
+Epoch: 48. Train_Loss: 0.19309.
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 1319/1319 [00:03<00:00, 365.14it/s]
+Epoch: 49. Train_Loss: 0.18851.
+mean is 0.18851
+min is 0.02279
+max is 3.64838
+std is 0.47494
+Calculated threshold is 0.66346
+0.6634552
+Calculating MSE on test set...
+7090 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 0.6634551882743835
+Accuracy:
+ 0.84868
+Recall:
+ 0.73937
+Precision score:
+ 0.94624
+f1-score:
+ 0.83011
+confusion matrix:
+ [[161705   7090]
+ [ 43993 124802]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.79      0.96      0.86    168795
+           1       0.95      0.74      0.83    168795
+
+    accuracy                           0.85    337590
+   macro avg       0.87      0.85      0.85    337590
+weighted avg       0.87      0.85      0.85    337590
+
+Hyper Params: Input Dim: 6. Learn Rate:0.01. Epochs: 50. Batch Size: 128
+
+--------
+
+
+Epoch: 48. Train_Loss: 0.11793.
+100%|¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦| 1319/1319 [00:03<00:00, 421.54it/s]
+Epoch: 49. Train_Loss: 0.10616.
+mean is 0.10616
+min is 0.00639
+max is 2.07320
+std is 0.27829
+Calculated threshold is 0.38445
+0.38444808
+Calculating MSE on test set...
+9209 false positives on dataset without attacks with size 168795
+Testing--------------------
+Calculated threshold is 0.3844480812549591
+Accuracy:
+ 0.84254
+Recall:
+ 0.73964
+Precision score:
+ 0.93130
+f1-score:
+ 0.82448
+confusion matrix:
+ [[159586   9209]
+ [ 43948 124847]]
+classification report:
+               precision    recall  f1-score   support
+
+           0       0.78      0.95      0.86    168795
+           1       0.93      0.74      0.82    168795
+
+    accuracy                           0.84    337590
+   macro avg       0.86      0.84      0.84    337590
+weighted avg       0.86      0.84      0.84    337590
+
+Hyper Params: Input Dim: 7. Learn Rate:0.01. Epochs: 50. Batch Size: 128
+-------------
