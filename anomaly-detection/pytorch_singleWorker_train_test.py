@@ -4,7 +4,6 @@ import os
 
 from absl import app
 from absl import flags
-# import logging
 import lime
 import lime.lime_tabular
 import matplotlib
@@ -272,9 +271,6 @@ def main(argv):
 
     matplotlib.use("pdf")
     plt.grid()
-    # logging.basicConfig(
-    #    filename="./figures/singleWorker/singleWorker_log.txt",
-    #    level=print)
 
     # %%
     input_dim = FLAGS.Input_dim
@@ -286,7 +282,7 @@ def main(argv):
         training_data.sample(frac=1, random_state=1),
         [int(1 / 3 * len(training_data)),
          int(2 / 3 * len(training_data))])
-    #
+    # %%
     x_tester = x_test
     x_trainer = x_train
     # %%

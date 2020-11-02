@@ -1,24 +1,24 @@
 # %%
 
-import os
 from glob import iglob
+import os
 
+from absl import app
+from absl import flags
 import lime
 import lime.lime_tabular
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scikitplot as skplt
-import syft as sy
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from absl import app
-from absl import flags
 from sklearn.metrics import recall_score, accuracy_score, precision_score, \
     confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler
+import syft as sy
 from syft.federated.floptimizer import Optims
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from tqdm import tqdm
 
 # %%
@@ -39,7 +39,7 @@ def get_train_data(top_n_features=10):
     print("Loading combined training data...")
     df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv", recursive=True)),
                    ignore_index=True)
-    fisher = pd.read_csv("../fisher.csv")
+    fisher = pd.read_csv("../../fisher.csv")
     features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
     return df, top_n_features, features
@@ -173,7 +173,7 @@ def testing(top_n_features):
     print("Testing data")
     df = pd.concat((pd.read_csv(f) for f in iglob("../data/**/benign_traffic.csv",
                                                   recursive=True)), ignore_index=True)
-    fisher = pd.read_csv("../fisher.csv")
+    fisher = pd.read_csv("../../fisher.csv")
     features = fisher.iloc[0:int(top_n_features)]["Feature"].values
     df = df[list(features)]
     x_train, x_opt, x_test = np.split(df.sample(frac=1, random_state=17), [int(1 / 3 * len(df)), int(2 / 3 * len(df))])

@@ -4,7 +4,6 @@ import os
 
 from absl import app
 from absl import flags
-# import logging
 import lime
 import lime.lime_tabular
 import matplotlib
@@ -252,9 +251,6 @@ def main(argv):
 
     matplotlib.use("pdf")
     plt.grid()
-    # logging.basicConfig(
-    #    filename="entralized_log.log",
-    #    level=print)
 
     # %%
     input_dim = FLAGS.Input_dim
