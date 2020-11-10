@@ -84,7 +84,7 @@ multiF1 = [0.83657, 0.83704, 0.82353, 0.8279, .82832, 0.82839, 0.82283, 0.840597
 def precision_plt(plt):
     title = "Precision"
     precision = plt
-    precision.style.use("ggplot")
+    #precision.style.use("ggplot")
     precision.grid()
     precision.title(f"Centralized {title} for different number of features")
     precision.xlabel("Input Dimension")
@@ -130,9 +130,10 @@ def f1_plt(plt):
 
 # %%
 def accuracy_plt_multi(plt):
-    plt.style.use("ggplot")
+    plt.style.use("default")
     title = "Accuracy"
     acc = plt
+    acc.grid()
     acc.title(f"{title} for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
@@ -146,14 +147,15 @@ def accuracy_plt_multi(plt):
     acc.scatter(xlista, ylistmulti, c="cornflowerblue", label="Multi Worker")
     acc.legend(loc="best")
     acc.savefig(f"comparison_scatter_acc_e50_lr001_bs128.png")
-    print("cent accuracy")
+    print("Multi accuracy")
 
 
 # %%
 def precision_plt_multi(plt):
     title = "Precision"
     precision = plt
-    precision.style.use("ggplot")
+    precision.style.use("default")
+    precision.grid()
     precision.title(f"{title} for different number of features")
     precision.xlabel("Input Dimension")
     precision.ylabel(f"{title}")
@@ -173,7 +175,8 @@ def precision_plt_multi(plt):
 def recall_plt_multi(plt):
     title = "Recall"
     recall = plt
-    recall.style.use("ggplot")
+    recall.style.use("default")
+    recall.grid()
     recall.title(f"{title} for different number of features")
     recall.xlabel("Epochs")
     recall.ylabel(f"{title}")
@@ -194,7 +197,8 @@ def recall_plt_multi(plt):
 def f1_plt_multi(plt):
     title = "F-Measure"
     f1 = plt
-    f1.style.use("ggplot")
+    f1.style.use("default")
+    f1.grid()
     f1.title(f"{title} for different number of features")
     f1.xlabel("Epochs")
     f1.ylabel(f"{title}")
@@ -251,8 +255,8 @@ def main(argv):
     plt.style.use("ggplot")
 
     matplotlib.use("pdf")
-    #accuracy_plt_multi(plt)
-    f1_plt_multi(plt)
+    accuracy_plt_multi(plt)
+    #f1_plt_multi(plt)
     #recall_plt_multi(plt)
     #precision_plt_multi(plt)
     #pandas_dataframe_print(plt)
