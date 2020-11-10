@@ -135,9 +135,10 @@ def f1_plt(plt):
 
 # %%
 def accuracy_plt_multi(plt):
-    plt.style.use("ggplot")
     title = "Accuracy"
     acc = plt
+    acc.style.use("default")
+    acc.grid()
     acc.title("")  # (f"{title}")# for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
@@ -158,7 +159,8 @@ def accuracy_plt_multi(plt):
 def precision_plt_multi(plt):
     title = "Precision"
     precision = plt
-    precision.style.use("ggplot")
+    precision.style.use("default")
+    precision.grid()
     precision.title("")  # (f"{title}")# for different number of features")
     precision.xlabel("Input Dimension")
     precision.ylabel(f"{title}")
@@ -178,7 +180,8 @@ def precision_plt_multi(plt):
 def recall_plt_multi(plt):
     title = "Recall"
     recall = plt
-    recall.style.use("ggplot")
+    recall.style.use("default")
+    recall.grid()
     recall.title("")  # (f"{title}")# for different number of features")
     recall.xlabel("Input Dimensions")
     recall.ylabel(f"{title}")
@@ -201,7 +204,8 @@ def recall_plt_multi(plt):
 def f1_plt_multi(plt):
     title = "F-Measure"
     f1 = plt
-    f1.style.use("ggplot")
+    f1.style.use("default")
+    f1.grid()
     f1.title("")  # f"{title}")# per number of features")
     f1.xlabel("Input Dimnesions")
     f1.ylabel(f"{title}")
@@ -261,8 +265,8 @@ def main(argv):
     matplotlib.use("pdf")
     # accuracy_plt_multi(plt)
     # f1_plt_multi(plt)
-    recall_plt_multi(plt)
-    # precision_plt_multi(plt)
+    # recall_plt_multi(plt)
+    precision_plt_multi(plt)
     # pandas_dataframe_print(plt)
 
     # f1_plt(plt)
