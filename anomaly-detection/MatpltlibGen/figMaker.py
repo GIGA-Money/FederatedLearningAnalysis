@@ -2,6 +2,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import os
 from absl import app
 
@@ -134,6 +135,23 @@ def f1_plt(plt):
 
 
 # %%
+def accuracy_avg_bar(plt):
+    cent_list = centAcc
+    multi_list = multiAcc
+    cent_avg = np.average(cent_list)
+    multi_avg = np.average(multi_list)
+    objects = ("Centralized", "Multi Worker")
+    y_pos = np.arange(len(objects))
+    avg_bar = plt
+    avg_bar.style.use("default")
+    avg_bar.bar(y_pos, [cent_avg * 100, multi_avg * 100], align="center")
+    avg_bar.xticks(y_pos, objects)
+    avg_bar.ylabel("Average Accuracy")
+    avg_bar.savefig(f"comparison_bar_avg_acc_e50_lr0001_bs128.png")
+    print(f"AVG bar {cent_avg * 100, multi_avg * 100}")
+
+
+# %%
 def accuracy_plt_multi(plt):
     title = "Accuracy"
     acc = plt
@@ -263,10 +281,11 @@ def main(argv):
     plt.style.use("ggplot")
 
     matplotlib.use("pdf")
+    accuracy_avg_bar(plt)
     # accuracy_plt_multi(plt)
     # f1_plt_multi(plt)
     # recall_plt_multi(plt)
-    precision_plt_multi(plt)
+    # precision_plt_multi(plt)
     # pandas_dataframe_print(plt)
 
     # f1_plt(plt)
