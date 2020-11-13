@@ -144,7 +144,8 @@ def accuracy_avg_bar(plt):
     y_pos = np.arange(len(objects))
     avg_bar = plt
     avg_bar.style.use("default")
-    avg_bar.bar(y_pos, [cent_avg * 100, multi_avg * 100], align="center")
+    avg_bar.ylim(90, 95)
+    avg_bar.bar(y_pos, [cent_avg * 100, multi_avg * 100], align="center", color=("orange", "cornflowerblue"))
     avg_bar.xticks(y_pos, objects)
     avg_bar.ylabel("Average Accuracy")
     avg_bar.savefig(f"comparison_bar_avg_acc_e50_lr0001_bs128.png")
