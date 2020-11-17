@@ -282,7 +282,7 @@ def main(argv):
     plt.style.use("ggplot")
 
     matplotlib.use("pdf")
-    # accuracy_avg_bar(plt)
+    accuracy_avg_bar(plt)
     # accuracy_plt_multi(plt)
     # f1_plt_multi(plt)
     # recall_plt_multi(plt)
