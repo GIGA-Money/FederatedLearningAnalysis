@@ -98,7 +98,7 @@ def precision_plt(plt):
     precision = plt
     precision.style.use("ggplot")
     precision.grid()
-    precision.title(f"Centralized {title} for different number of features")
+    precision.title(f"Baseline {title} for different number of features")
     precision.xlabel("Input Dimension")
     precision.ylabel(f"{title}")
     xlistp = xList
@@ -115,7 +115,7 @@ def recall_plt(plt):
     recall = plt
     recall.style.use("ggplot")
     recall.grid()
-    recall.title(f"Centralized {title} for different number of features")
+    recall.title(f"Baseline {title} for different number of features")
     recall.xlabel("Epochs")
     recall.ylabel(f"{title}")
     xlistr = xList
@@ -132,7 +132,7 @@ def f1_plt(plt):
     f1 = plt
     f1.style.use("ggplot")
     f1.grid()
-    f1.title(f"Centralized {title} for different number of features")
+    f1.title(f"Baseline {title} for different number of features")
     f1.xlabel("Epochs")
     f1.ylabel(f"{title}")
     xlistf = xList
@@ -149,11 +149,11 @@ def accuracy_avg_bar(plt):
     multi_list = multiAcc
     cent_avg = np.average(cent_list)
     multi_avg = np.average(multi_list)
-    objects = ("Centralized", "Multi Worker")
+    objects = ("Baseline", "Federated")
     y_pos = np.arange(len(objects))
     avg_bar = plt
     avg_bar.style.use("default")
-    avg_bar.ylim(90, 95)
+    avg_bar.ylim(93, 94.5)
     avg_bar.bar(y_pos, [cent_avg * 100, multi_avg * 100], align="center", color=("orange", "cornflowerblue"))
     avg_bar.xticks(y_pos, objects)
     avg_bar.ylabel("Average Accuracy")
@@ -174,10 +174,10 @@ def accuracy_plt_multi(plt):
     xlista = xList[half:]
     ylista = centAcc[half:]
     ylistmulti = multiAcc[half:]
-    # acc.plot(xlista, ylista, label="Centralized")
-    # acc.plot(xlista, ylistmulti, label="Multi Worker")
-    acc.scatter(xlista, ylista, c="orange", label="Centralized")
-    acc.scatter(xlista, ylistmulti, c="cornflowerblue", label="Multi Worker")
+    # acc.plot(xlista, ylista, label="Baseline")
+    # acc.plot(xlista, ylistmulti, label="Federated")
+    acc.scatter(xlista, ylista, c="orange", label="Baseline")
+    acc.scatter(xlista, ylistmulti, c="cornflowerblue", label="Federated")
     acc.legend(loc="lower right", framealpha=1.0, facecolor='white')
     acc.savefig(f"comparison_scatter_acc_e50_lr001_bs128.png")
     print("cent accuracy")
@@ -195,10 +195,10 @@ def precision_plt_multi(plt):
     xlistp = xList
     ylistp = centPrecision
     ylistmulti = multiPrecision
-    # precision.plot(xlistp,  ylistp, label="Centralized")
-    # precision.plot(xlistp, ylistmulti, label="Multi Worker")
-    precision.scatter(xlistp, ylistp, c="orange", label="Centralized")
-    precision.scatter(xlistp, ylistmulti, c="cornflowerblue", label="Multi Worker")
+    # precision.plot(xlistp,  ylistp, label="Baseline")
+    # precision.plot(xlistp, ylistmulti, label="Federated")
+    precision.scatter(xlistp, ylistp, c="orange", label="Baseline")
+    precision.scatter(xlistp, ylistmulti, c="cornflowerblue", label="Federated")
     precision.legend(loc="lower right", framealpha=1.0, facecolor='white')
     precision.savefig(f"comparison_scatter_precision_e50_lr0001_bs128.png")
     print("multi precision")
@@ -217,12 +217,12 @@ def recall_plt_multi(plt):
     xlistr = xList[half:]
     ylistr = centRecall[half:]
     ylistmulti = multiRecall[half:]
-    # recall.plot(xlistr, ylistr, label="Centralized")
-    # recall.plot(xlistr, ylistmulti, label="Multi Worker")
+    # recall.plot(xlistr, ylistr, label="Baseline")
+    # recall.plot(xlistr, ylistmulti, label="Federated")
     # this line will shift the plot away from the left side by 0.15
     recall.subplots_adjust(left=0.15)
-    recall.scatter(xlistr, ylistr, c="orange", label="Centralized")
-    recall.scatter(xlistr, ylistmulti, c="cornflowerblue", label="Multi Worker")
+    recall.scatter(xlistr, ylistr, c="orange", label="Baseline")
+    recall.scatter(xlistr, ylistmulti, c="cornflowerblue", label="Federated")
     recall.legend(loc="lower right", framealpha=1.0, facecolor='white')
     recall.savefig(f"comparison_scatter_recall_e50_lr0001_bs128.png")
     print("Multi recall")
@@ -241,10 +241,10 @@ def f1_plt_multi(plt):
     xlistf = xList[half:]
     ylistf = centF1[half:]
     ylistmulti = multiF1[half:]
-    # f1.plot(xlistf, ylistf, label="Centralized")
-    # f1.plot(xlistf, ylistmulti, label="Multi Worker")
-    f1.scatter(xlistf, ylistf, c="orange", label="Centralized")
-    f1.scatter(xlistf, ylistmulti, c="cornflowerblue", label="Multi Worker")
+    # f1.plot(xlistf, ylistf, label="Baseline")
+    # f1.plot(xlistf, ylistmulti, label="Federated")
+    f1.scatter(xlistf, ylistf, c="orange", label="Baseline")
+    f1.scatter(xlistf, ylistmulti, c="cornflowerblue", label="Federated")
     f1.legend(loc="lower right", framealpha=1.0, facecolor='white')
     f1.savefig(f"comparison_scatter_f1_e50_lr0001_bs128.png")
     print("Multi F-measure")
@@ -256,7 +256,7 @@ def f1_plt_multi(plt):
     title = "Accuracy"
     acc = plt
     acc.grid()
-    acc.title(f"Multi Worker {title} for different number of features")
+    acc.title(f"Federated {title} for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
     xlista = xList
@@ -277,7 +277,7 @@ def pandas_dataframe_print(plt):
     ax.axis('tight')
 
     df = pd.DataFrame([multiAcc, centAcc])
-    rowLabel = ("mutli worker Accuracy", "centralized Accuracy")
+    rowLabel = ("mutli worker Accuracy", "Baseline Accuracy")
     ax.table(cellText=df.values, cellLoc='center', colLabels=xList, rowLabels=rowLabel, loc='center')
     fig.tight_layout()
     plt.savefig(f"data_acc_e50_lr001_bs128_table.pdf")
