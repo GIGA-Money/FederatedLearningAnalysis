@@ -2,6 +2,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import os
 from absl import app
 
@@ -30,6 +31,10 @@ centF1 = [0.79773, 0.81457, 0.83368, 0.83738, 0.84364, 0.84355, 0.84291,
           0.98703, 0.98703, 0.98710, 0.98705, 0.98681,
           0.98627, 0.98733, 0.98088, 0.98520, 0.98832, 0.99016, 0.98947, 0.98550, 0.98575,
           0.98580, 0.98594, 0.98579]
+          
+centFalsePos = [19346, 12884, 5856, 4532, 2303, 2341, 2561, 3470, 3756, 3739, 3549, 
+                4011, 4258, 4404, 4407, 4383, 4402, 4485, 4670, 4302, 6551, 5040, 
+                3954, 3315, 3559, 4941, 4849, 4830, 4783, 4833]
 
 multiAcc = [0.82832, 0.84076, 0.85975, 0.86133, 0.86325, 0.86331,
             0.86333, 0.86093, 0.86020, 0.86021, 0.86009, 0.98935, 0.98893,
@@ -52,6 +57,11 @@ multiF1 = [0.82839, 0.82283, 0.840597, 0.842104, 0.843941, 0.8440002,
            0.9892725, 0.989179, 0.989374, 0.9891305, 0.9892320,
            0.9884209, 0.9890638, 0.988797, 0.9882412, 0.990177, 0.9917252,
            0.991288, 0.989315, 0.98924037, 0.98787, 0.9883713, 0.987827]
+          
+          
+multiFalsePos = [9797, 3385, 3456, 2848, 2189, 2171, 2166, 2977, 3224, 3223,
+                 3262, 3548, 3702, 3625, 3659, 3592, 3676, 3641, 3921, 3698, 3790,
+                 3979, 3310, 2770, 2923, 3608, 3632, 4104, 3933, 4123]
 # %%
 '''
 xList = [5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115]
@@ -134,10 +144,29 @@ def f1_plt(plt):
 
 
 # %%
+def accuracy_avg_bar(plt):
+    cent_list = centAcc
+    multi_list = multiAcc
+    cent_avg = np.average(cent_list)
+    multi_avg = np.average(multi_list)
+    objects = ("Centralized", "Multi Worker")
+    y_pos = np.arange(len(objects))
+    avg_bar = plt
+    avg_bar.style.use("default")
+    avg_bar.ylim(90, 95)
+    avg_bar.bar(y_pos, [cent_avg * 100, multi_avg * 100], align="center", color=("orange", "cornflowerblue"))
+    avg_bar.xticks(y_pos, objects)
+    avg_bar.ylabel("Average Accuracy")
+    avg_bar.savefig(f"comparison_bar_avg_acc_e50_lr0001_bs128.png")
+    print(f"AVG bar {cent_avg * 100, multi_avg * 100}")
+
+
+# %%
 def accuracy_plt_multi(plt):
-    plt.style.use("ggplot")
     title = "Accuracy"
     acc = plt
+    acc.style.use("default")
+    acc.grid()
     acc.title("")  # (f"{title}")# for different number of features")
     acc.xlabel("Input Dimensions")
     acc.ylabel(f"{title}")
@@ -158,7 +187,8 @@ def accuracy_plt_multi(plt):
 def precision_plt_multi(plt):
     title = "Precision"
     precision = plt
-    precision.style.use("ggplot")
+    precision.style.use("default")
+    precision.grid()
     precision.title("")  # (f"{title}")# for different number of features")
     precision.xlabel("Input Dimension")
     precision.ylabel(f"{title}")
@@ -178,7 +208,8 @@ def precision_plt_multi(plt):
 def recall_plt_multi(plt):
     title = "Recall"
     recall = plt
-    recall.style.use("ggplot")
+    recall.style.use("default")
+    recall.grid()
     recall.title("")  # (f"{title}")# for different number of features")
     recall.xlabel("Input Dimensions")
     recall.ylabel(f"{title}")
@@ -201,9 +232,10 @@ def recall_plt_multi(plt):
 def f1_plt_multi(plt):
     title = "F-Measure"
     f1 = plt
-    f1.style.use("ggplot")
+    f1.style.use("default")
+    f1.grid()
     f1.title("")  # f"{title}")# per number of features")
-    f1.xlabel("Input Dimnesions")
+    f1.xlabel("Input Dimensions")
     f1.ylabel(f"{title}")
     half = len(xList) >> 1
     xlistf = xList[half:]
@@ -250,6 +282,24 @@ def pandas_dataframe_print(plt):
     fig.tight_layout()
     plt.savefig(f"data_acc_e50_lr001_bs128_table.pdf")
 
+def false_pos_scatter(plt):
+    title = "Evaluation False Positives"
+    f1 = plt
+    f1.style.use("default")
+    f1.grid()
+    f1.title("")  # f"{title}")# per number of features")
+    f1.xlabel("Input Dimensions")
+    f1.ylabel(f"{title}")
+    half = len(xList) >> 1
+    xlistf = xList[half:]
+    ylistf = centFalsePos[half:]
+    ylistmulti = multiFalsePos[half:]
+    #print(xlistf.__sizeof__(), ylistf.__sizeof__(), ylistmulti.__sizeof__())
+    f1.scatter(xlistf, ylistf, c="orange", label="Centralized")
+    f1.scatter(xlistf, ylistmulti, c="cornflowerblue", label="Multi Worker")
+    f1.legend(loc="lower right", framealpha=1.0, facecolor='white')
+    f1.savefig(f"comparison_scatter_false_pos_e50_lr0001_bs128.png")
+    print("Scatter false positives chart")
 
 # %%
 def main(argv):
@@ -259,16 +309,22 @@ def main(argv):
     plt.style.use("ggplot")
 
     matplotlib.use("pdf")
+    """
+    uncomment a line to use it, having more than one uncommented might result in overlapping data being printed on 
+    figures.
+    """
+    # accuracy_avg_bar(plt)
     # accuracy_plt_multi(plt)
-    # f1_plt_multi(plt)
-    recall_plt_multi(plt)
+    f1_plt_multi(plt)
+    # recall_plt_multi(plt)
     # precision_plt_multi(plt)
     # pandas_dataframe_print(plt)
-
+    # false_pos_scatter(plt)
+    #print(min(centFalsePos))
     # f1_plt(plt)
     # precision_plt(plt)
     # recall_plt(plt)
-
+    print("Finished")
     os._exit(0)
 
 

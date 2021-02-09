@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import scikitplot as skplt
 from sklearn.metrics import recall_score, accuracy_score, precision_score, \
-    confusion_matrix, classification_report, f1_score
+    confusion_matrix, classification_report, f1_score, roc_curve
 from sklearn.preprocessing import StandardScaler
 import torch
 import torch.nn as nn
